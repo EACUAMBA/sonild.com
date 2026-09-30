@@ -2,15 +2,15 @@
 
 namespace App\Filament\Resources\UserGroups;
 
+use App\Filament\Forms\Components\GroupRelationSelect;
 use App\Filament\Resources\UserGroups\Pages\CreateUserGroup;
 use App\Filament\Resources\UserGroups\Pages\EditUserGroup;
 use App\Filament\Resources\UserGroups\Pages\ListUserGroups;
-use App\Models\Permission;
-use App\Models\User;
+use App\Filament\Tables\GroupPermissionsTable;
+use App\Filament\Tables\GroupUsersTable;
 use App\Models\UserGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Set;
@@ -49,21 +49,16 @@ class UserGroupResource extends Resource
                 ->required()
                 ->maxLength(255)
                 ->unique(ignoreRecord: true)
-                ->dehydrated(false)
-                ->helperText('Gerado automaticamente a partir do nome.'),
-            Select::make('users')
+                ->dehydrated(false),
+            GroupRelationSelect::make('users')
                 ->label('Utilizadores')
                 ->relationship('users', 'name')
-                ->multiple()
-                ->searchable(['name', 'email'])
-                ->getOptionLabelFromRecordUsing(fn(User $record): string => "{$record->name} ({$record->email})")
+                ->tableConfiguration(GroupUsersTable::class)
                 ->columnSpanFull(),
-            Select::make('permissions')
+            GroupRelationSelect::make('permissions')
                 ->label('Permissões')
                 ->relationship('permissions', 'name')
-                ->multiple()
-                ->searchable(['name', 'scope', 'resource', 'action'])
-                ->getOptionLabelFromRecordUsing(fn(Permission $record): string => "{$record->name} — {$record->scope} / {$record->resource} / {$record->action}")
+                ->tableConfiguration(GroupPermissionsTable::class)
                 ->columnSpanFull(),
         ]);
     }
