@@ -18,6 +18,8 @@ class PermissionResource extends Resource
 
     protected static ?string $navigationParentItem = 'Controle de acesso';
 
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $modelLabel = 'Permissão';
 
     protected static ?string $pluralModelLabel = 'Permissões';
