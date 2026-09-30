@@ -4,8 +4,10 @@ namespace App\Livewire;
 
 use App\Filament\Tables\GroupPermissionsTable;
 use App\Filament\Tables\GroupUsersTable;
+use App\Filament\Tables\UserGroupsTable;
 use App\Models\Permission;
 use App\Models\User;
+use App\Models\UserGroup;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -42,6 +44,7 @@ class GroupRelationTable extends Component implements HasActions, HasForms, HasT
         [$model, $configuration] = match ($this->relationshipName) {
             'users' => [User::class, GroupUsersTable::class],
             'permissions' => [Permission::class, GroupPermissionsTable::class],
+            'userGroups' => [UserGroup::class, UserGroupsTable::class],
         };
 
         return $configuration::configure($table)

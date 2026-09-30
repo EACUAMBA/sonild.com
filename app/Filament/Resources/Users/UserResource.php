@@ -2,10 +2,17 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Filament\Forms\Components\GroupRelationSelect;
 use App\Filament\Resources\Users\Pages\CreateUser;
+use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\Pages\ViewUser;
+use App\Filament\Tables\UserGroupsTable;
 use App\Models\User;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -36,9 +43,29 @@ class UserResource extends Resource
             TextInput::make('email')->label('Email')->email()->required()->maxLength(255)
                 ->unique(ignoreRecord: true),
             TextInput::make('password')->label('Senha')->password()->revealable()
-                ->required()->rule(Password::defaults())->confirmed(),
+                ->afterStateHydrated(fn(TextInput $component) => $component->state(null))
+                ->required(fn(string $operation): bool => $operation === 'create')
+                ->dehydrated(fn(?string $state): bool => filled($state))
+                ->rule(Password::defaults())->confirmed(),
             TextInput::make('password_confirmation')->label('Confirmar senha')->password()
-                ->revealable()->required()->dehydrated(false),
+                ->revealable()->requiredWith('password')->dehydrated(false),
+            GroupRelationSelect::make('userGroups')->label('Grupos')
+                ->relationship('userGroups', 'name')
+                ->tableConfiguration(UserGroupsTable::class)
+                ->columnSpanFull(),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextEntry::make('name')->label('Nome'),
+            TextEntry::make('email')->label('Email'),
+            TextEntry::make('email_verified_at')->label('Confirmação de email')
+                ->dateTime('d/m/Y H:i')->placeholder('Pendente'),
+            TextEntry::make('created_at')->label('Registado em')->dateTime('d/m/Y H:i'),
+            TextEntry::make('userGroups.name')->label('Grupos')->badge()
+                ->placeholder('Sem grupos')->columnSpanFull(),
         ]);
     }
 
@@ -58,7 +85,10 @@ class UserResource extends Resource
                     ->trueLabel('Confirmado')->falseLabel('Pendente'),
             ])
             ->defaultSort('created_at', 'desc')
-            ->recordUrl(null);
+            ->recordActions([
+                ViewAction::make()->label('Ver'),
+                EditAction::make()->label('Editar'),
+            ]);
     }
 
     public static function getPages(): array
@@ -66,6 +96,8 @@ class UserResource extends Resource
         return [
             'index' => ListUsers::route('/'),
             'create' => CreateUser::route('/create'),
+            'view' => ViewUser::route('/{record}'),
+            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 }
