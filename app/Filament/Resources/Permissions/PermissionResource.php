@@ -6,6 +6,7 @@ use App\Filament\Resources\Permissions\Pages\ListPermissions;
 use App\Models\Permission;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -31,12 +32,15 @@ class PermissionResource extends Resource
                 TextColumn::make('id')->label('ID')->sortable(),
                 TextColumn::make('name')->label('Nome')->searchable()->sortable(),
                 TextColumn::make('scope')->label('Scope')->searchable()->sortable(),
+                TextColumn::make('module')->label('Módulo')->searchable()->sortable(),
                 TextColumn::make('resource')->label('Resource')->searchable()->sortable(),
                 TextColumn::make('action')->label('Action')->searchable()->sortable(),
                 TextColumn::make('created_at')->label('Criado em')->dateTime('d/m/Y H:i')->sortable(),
                 TextColumn::make('updated_at')->label('Atualizado em')->dateTime('d/m/Y H:i')->sortable(),
             ])
             ->defaultSort('name')
+            ->groups([Group::make('module')->label('Módulo')->collapsible()])
+            ->defaultGroup('module')
             ->recordUrl(null)
             ->recordActions([])
             ->toolbarActions([]);

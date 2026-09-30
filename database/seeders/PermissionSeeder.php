@@ -9,13 +9,16 @@ class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        Permission::updateOrCreate([
-            'scope' => 'konvitte',
-            'resource' => 'event',
-            'action' => 'create',
-        ], [
-            'name' => 'Criar evento',
-        ]);
+        foreach (['create' => 'Criar evento', 'read' => 'Ler eventos', 'update' => 'Editar eventos', 'delete' => 'Eliminar eventos'] as $action => $name) {
+            Permission::updateOrCreate([
+                'scope' => 'konvitte',
+                'resource' => 'event',
+                'action' => $action,
+            ], [
+                'name' => $name,
+                'module' => 'Eventos',
+            ]);
+        }
 
         $resources = [
             'user' => 'utilizadores',
@@ -37,6 +40,7 @@ class PermissionSeeder extends Seeder
                     'action' => $action,
                 ], [
                     'name' => $actionLabel . ' ' . $resourceLabel,
+                    'module' => 'ACL',
                 ]);
             }
         }
@@ -47,6 +51,7 @@ class PermissionSeeder extends Seeder
             'action' => 'read',
         ], [
             'name' => 'Ler permissões',
+            'module' => 'ACL',
         ]);
     }
 }

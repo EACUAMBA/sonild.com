@@ -54,6 +54,21 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return true;
     }
 
+    public function hasPermission(string $scope, string $module, string $resource, string $action): bool
+    {
+        return $this->userGroups()->whereHas('permissions', fn($query) => $query
+            ->where('scope', $scope)
+            ->where('module', $module)
+            ->where('resource', $resource)
+            ->where('action', $action))->exists();
+    }
+
+    public function hasModulePermission(string $scope, string $module): bool
+    {
+        return $this->userGroups()->whereHas('permissions', fn($query) => $query
+            ->where('scope', $scope)->where('module', $module))->exists();
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         $notification = app(VerifyEmail::class);

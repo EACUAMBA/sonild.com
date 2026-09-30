@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,6 +34,7 @@ class BackofficePanelProvider extends PanelProvider
             ->navigationItems([
                 NavigationItem::make('Controle de acesso')
                     ->group('Settings')
+                    ->visible(fn(): bool => Filament::auth()->user()?->hasModulePermission('backoffice', 'ACL') ?? false)
                     ->icon('heroicon-o-lock-closed'),
             ])
             ->colors([

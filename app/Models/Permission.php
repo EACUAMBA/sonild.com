@@ -11,12 +11,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $scope
+ * @property string $module
  * @property string $resource
  * @property string $action
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'scope', 'resource', 'action'])]
+#[Fillable(['name', 'scope', 'module', 'resource', 'action'])]
 class Permission extends Model
 {
     /** @return BelongsToMany<UserGroup, $this> */
