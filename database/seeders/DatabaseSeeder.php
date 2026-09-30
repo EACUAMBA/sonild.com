@@ -17,11 +17,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(UserGroupSeeder::class);
 
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        User::updateOrCreate([
+            'email' => 'admin@sonild.com',
+        ], [
+            'name' => 'Administrator',
+            'password' => 'password',
+            'email_verified_at' => now(),
         ]);
     }
 }
