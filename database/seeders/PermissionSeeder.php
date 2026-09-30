@@ -16,5 +16,37 @@ class PermissionSeeder extends Seeder
         ], [
             'name' => 'Criar evento',
         ]);
+
+        $resources = [
+            'user' => 'utilizadores',
+            'usergroup' => 'grupos de utilizadores',
+        ];
+
+        $actions = [
+            'create' => 'Criar',
+            'read' => 'Ler',
+            'update' => 'Editar',
+            'delete' => 'Eliminar',
+        ];
+
+        foreach ($resources as $resource => $resourceLabel) {
+            foreach ($actions as $action => $actionLabel) {
+                Permission::updateOrCreate([
+                    'scope' => 'backoffice',
+                    'resource' => $resource,
+                    'action' => $action,
+                ], [
+                    'name' => $actionLabel . ' ' . $resourceLabel,
+                ]);
+            }
+        }
+
+        Permission::updateOrCreate([
+            'scope' => 'backoffice',
+            'resource' => 'permission',
+            'action' => 'read',
+        ], [
+            'name' => 'Ler permissões',
+        ]);
     }
 }
