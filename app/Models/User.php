@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Filament\Auth\Notifications\VerifyEmail;
+use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,7 +31,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -49,6 +52,14 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $notification = app(VerifyEmail::class);
+        $notification->url = Filament::getPanel('backoffice')->getVerifyEmailUrl($this);
+
+        $this->notifyNow($notification);
     }
 
     /** @return BelongsToMany<UserGroup, $this> */

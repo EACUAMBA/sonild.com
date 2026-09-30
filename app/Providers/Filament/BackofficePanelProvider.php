@@ -29,6 +29,7 @@ class BackofficePanelProvider extends PanelProvider
             ->id('backoffice')
             ->path('backoffice')
             ->login()
+            ->emailVerification()
             ->navigationItems([
                 NavigationItem::make('Controle de acesso')
                     ->group('Settings')
