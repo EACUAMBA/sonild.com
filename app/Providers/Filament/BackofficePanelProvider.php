@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -28,6 +29,11 @@ class BackofficePanelProvider extends PanelProvider
             ->id('backoffice')
             ->path('backoffice')
             ->login()
+            ->navigationItems([
+                NavigationItem::make('Controle de acesso')
+                    ->group('Settings')
+                    ->icon('heroicon-o-lock-closed'),
+            ])
             ->colors([
                 'primary' => Color::Amber,
             ])
