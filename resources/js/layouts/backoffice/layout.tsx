@@ -1,14 +1,18 @@
 import {Link, router, usePage} from '@inertiajs/react';
 import {
+    CalendarDays,
     ChevronDown,
     ChevronRight,
+    HeartHandshake,
     LayoutDashboard,
     LogOut,
     Menu,
     Moon,
+    PartyPopper,
     Settings2,
     ShieldCheck,
     Sun,
+    Tags,
     Users,
     UsersRound,
     X
@@ -29,6 +33,8 @@ const accessNav = [
 ];
 
 const currentPathStartsWithAccess = (path: string): boolean => accessNav.some((item) => path === item.href || path.startsWith(`${item.href}/`));
+const currentPathStartsWithEventtu = (path: string): boolean => path === '/backoffice/eventtu' || path.startsWith('/backoffice/eventtu/');
+const currentPathStartsWithKonvitte = (path: string): boolean => path === '/backoffice/konvitte' || path.startsWith('/backoffice/konvitte/');
 
 export default function BackofficeLayout({children}: PropsWithChildren) {
     const page = usePage<{ auth: Auth }>();
@@ -39,6 +45,8 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
     const [profileOpen, setProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithAccess(window.location.pathname));
     const [accessOpen, setAccessOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithAccess(window.location.pathname));
+    const [eventtuOpen, setEventtuOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithEventtu(window.location.pathname));
+    const [konvitteOpen, setKonvitteOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithKonvitte(window.location.pathname));
     const currentPath = page.url.split('?')[0];
     const user = auth.user;
     const toggleTheme = () => updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark');
@@ -63,6 +71,35 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
                              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><Icon
                     className="size-4"/>{item.label}</Link>;
             })}
+                <div className="pt-2">
+                    <button type="button" onClick={() => setEventtuOpen((open) => !open)} aria-expanded={eventtuOpen}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
+                        <CalendarDays className="size-4"/><span
+                        className="flex-1 text-left">Eventtu</span>{eventtuOpen ? <ChevronDown className="size-4"/> :
+                        <ChevronRight className="size-4"/>}
+                    </button>
+                    {eventtuOpen && <div className="ml-4 mt-1 space-y-1 border-l pl-3">
+                        <Link href="/backoffice/eventtu/eventos" onClick={() => setMobileOpen(false)}
+                              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${currentPath.startsWith('/backoffice/eventtu/eventos') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><PartyPopper
+                            className="size-4"/>Eventos</Link>
+                        <Link href="/backoffice/eventtu/event-types" onClick={() => setMobileOpen(false)}
+                              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${currentPath.startsWith('/backoffice/eventtu/event-types') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><Tags
+                            className="size-4"/>Tipos de eventos</Link>
+                    </div>}
+                </div>
+                <div className="pt-2">
+                    <button type="button" onClick={() => setKonvitteOpen((open) => !open)} aria-expanded={konvitteOpen}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
+                        <HeartHandshake className="size-4"/><span
+                        className="flex-1 text-left">Konvitte</span>{konvitteOpen ? <ChevronDown className="size-4"/> :
+                        <ChevronRight className="size-4"/>}
+                    </button>
+                    {konvitteOpen && <div className="ml-4 mt-1 space-y-1 border-l pl-3">
+                        <Link href="/backoffice/konvitte/convite" onClick={() => setMobileOpen(false)}
+                              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${currentPath.startsWith('/backoffice/konvitte/convite') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><HeartHandshake
+                            className="size-4"/>Convite</Link>
+                    </div>}
+                </div>
                 <div className="pt-2">
                     <button type="button" onClick={() => setSettingsOpen((open) => !open)} aria-expanded={settingsOpen}
                             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
