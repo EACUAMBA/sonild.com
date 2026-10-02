@@ -28,7 +28,7 @@ class BackofficePanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('backoffice')
-            ->path('backoffice')
+            ->path('filament')
             ->login()
             ->emailVerification()
             ->navigationItems([
