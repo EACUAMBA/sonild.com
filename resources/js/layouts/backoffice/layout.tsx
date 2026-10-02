@@ -31,14 +31,15 @@ const accessNav = [
 const currentPathStartsWithAccess = (path: string): boolean => accessNav.some((item) => path === item.href || path.startsWith(`${item.href}/`));
 
 export default function BackofficeLayout({children}: PropsWithChildren) {
-    const {auth} = usePage<{ auth: Auth }>().props;
+    const page = usePage<{ auth: Auth }>();
+    const {auth} = page.props;
     const {resolvedAppearance, updateAppearance} = useAppearance();
     const initials = useInitials();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithAccess(window.location.pathname));
     const [accessOpen, setAccessOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithAccess(window.location.pathname));
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const currentPath = page.url.split('?')[0];
     const user = auth.user;
     const toggleTheme = () => updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark');
     const signOut = () => router.post(logout().url);
