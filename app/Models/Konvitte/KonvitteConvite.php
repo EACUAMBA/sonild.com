@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['konvitte_invite_type_id', 'nome_noiva', 'nome_noivo', 'data', 'local', 'texto_biblico', 'livro_biblico', 'foto_capa', 'foto_inicial', 'musica', 'texto_casal', 'foto_informacoes', 'texto_celebre', 'texto_orientacoes'])]
+#[Fillable(['konvitte_invite_type_id', 'nome_noiva', 'nome_noivo', 'nome_pai_noivo', 'nome_mae_noivo', 'nome_pai_noiva', 'nome_mae_noiva', 'data', 'local', 'texto_biblico', 'livro_biblico', 'foto_capa', 'foto_inicial', 'musica', 'texto_casal', 'foto_informacoes', 'texto_celebre', 'texto_orientacoes'])]
 class KonvitteConvite extends Model
 {
     /** @return BelongsTo<KonvitteInviteType, $this> */

@@ -155,8 +155,50 @@
         @apply text-muted-foreground;
     }
 
+    html.dark .ant-select:not(.ant-select-customize-input) .ant-select-selector,
+    html.dark .ant-picker {
+        background: var(--background) !important;
+        border-color: var(--input) !important;
+        box-shadow: none !important;
+        color: var(--foreground) !important;
+    }
+
+    html.dark .ant-select-selection-item,
+    html.dark .ant-select-selection-placeholder,
+    html.dark .ant-picker-input > input,
+    html.dark .ant-picker-suffix,
+    html.dark .ant-select-arrow {
+        color: var(--foreground) !important;
+    }
+
+    html.dark .ant-select-selection-placeholder,
+    html.dark .ant-picker-input > input::placeholder {
+        color: var(--muted-foreground) !important;
+    }
+
+    html.dark .ant-select-dropdown,
+    html.dark .ant-picker-dropdown .ant-picker-panel-container {
+        background: var(--popover) !important;
+        color: var(--popover-foreground) !important;
+    }
+
+    html.dark .ant-select-item,
+    html.dark .ant-picker-header,
+    html.dark .ant-picker-content th,
+    html.dark .ant-picker-cell {
+        color: var(--popover-foreground) !important;
+    }
+
+    html.dark .ant-select-item-option-active,
+    html.dark .ant-select-item-option-selected,
+    html.dark .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+    html.dark .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner {
+        background: var(--accent) !important;
+        color: var(--accent-foreground) !important;
+    }
+
     .action-button {
-        @apply inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
+        @apply inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-primary px-4 py-0 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60;
     }
 
     .form-card {
@@ -192,7 +234,19 @@
     }
 
     .secondary-button {
-        @apply inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-muted;
+        @apply inline-flex min-h-10 items-center justify-center rounded-lg border px-3 py-0 text-sm font-medium transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+    .ant-picker {
+        min-height: 40px !important;
+        height: 40px !important;
+        border-radius: 0.5rem !important;
+    }
+
+    .ant-select-single .ant-select-selector .ant-select-selection-item,
+    .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+        line-height: 38px !important;
     }
 
     .repeater-list {

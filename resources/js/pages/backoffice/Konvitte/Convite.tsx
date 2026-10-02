@@ -8,7 +8,7 @@ import MesaManagement from '@/components/backoffice/Konvitte/MesaManagement';
 
 type InviteType = { id: number; name: string; code: string };
 type ProgramItem = { hora: string; nome: string; localizacao: string; googleMapsLink: string; icon: string };
-type Contact = { categoria: string; nome: string; telefone: string; email: string };
+type Contact = { nome: string; telefone: string; email: string };
 type ExistingGallery = { id: number; name: string; url: string };
 type ExistingInvite =
     {
@@ -17,6 +17,10 @@ type ExistingInvite =
         inviteTypeId: number;
         nomeNoiva: string;
         nomeNoivo: string;
+        nomePaiNoivo: string;
+        nomeMaeNoivo: string;
+        nomePaiNoiva: string;
+        nomeMaeNoiva: string;
         data: string;
         local: string;
         textoBiblico: string | null;
@@ -47,6 +51,10 @@ type FormData = {
     inviteTypeId: string;
     nomeNoiva: string;
     nomeNoivo: string;
+    nomePaiNoivo: string;
+    nomeMaeNoivo: string;
+    nomePaiNoiva: string;
+    nomeMaeNoiva: string;
     data: string;
     local: string;
     textoBiblico: string;
@@ -67,16 +75,16 @@ const icons = [{value: 'church', label: 'Igreja'}, {value: 'camera', label: 'Fot
     value: 'glass',
     label: 'Receção'
 }, {value: 'music', label: 'Música'}, {value: 'heart', label: 'Celebração'}, {value: 'calendar', label: 'Agenda'}];
-const contactCategories = [{value: 'noivos', label: 'Noivos'}, {
-    value: 'pais_noivo',
-    label: 'Pais do noivo'
-}, {value: 'pais_noiva', label: 'Pais da noiva'}];
 const emptyProgram = (): ProgramItem => ({hora: '', nome: '', localizacao: '', googleMapsLink: '', icon: 'calendar'});
-const emptyContact = (): Contact => ({categoria: 'noivos', nome: '', telefone: '', email: ''});
+const emptyContact = (): Contact => ({nome: '', telefone: '', email: ''});
 const initialData = (convite: ExistingInvite): FormData => ({
     inviteTypeId: convite ? String(convite.inviteTypeId) : '',
     nomeNoiva: convite?.nomeNoiva ?? '',
     nomeNoivo: convite?.nomeNoivo ?? '',
+    nomePaiNoivo: convite?.nomePaiNoivo ?? '',
+    nomeMaeNoivo: convite?.nomeMaeNoivo ?? '',
+    nomePaiNoiva: convite?.nomePaiNoiva ?? '',
+    nomeMaeNoiva: convite?.nomeMaeNoiva ?? '',
     data: convite?.data ?? '',
     local: convite?.local ?? '',
     textoBiblico: convite?.textoBiblico ?? '',
@@ -141,6 +149,26 @@ export default function Convite({inviteTypes, convite, mesas, convidados}: Props
                                                                                value={form.data.nomeNoivo}
                                                                                onChange={(e) => form.setData('nomeNoivo', e.target.value)}
                                                                                placeholder="Ex.: Edilson"/>{fieldError('nomeNoivo')}
+                    </label><label className="field-label">Nome do pai do noivo<input className="field-input"
+                                                                                      value={form.data.nomePaiNoivo}
+                                                                                      onChange={(e) => form.setData('nomePaiNoivo', e.target.value)}
+                                                                                      placeholder="Nome completo"
+                                                                                      required/>{fieldError('nomePaiNoivo')}
+                    </label><label className="field-label">Nome da mãe do noivo<input className="field-input"
+                                                                                      value={form.data.nomeMaeNoivo}
+                                                                                      onChange={(e) => form.setData('nomeMaeNoivo', e.target.value)}
+                                                                                      placeholder="Nome completo"
+                                                                                      required/>{fieldError('nomeMaeNoivo')}
+                    </label><label className="field-label">Nome do pai da noiva<input className="field-input"
+                                                                                      value={form.data.nomePaiNoiva}
+                                                                                      onChange={(e) => form.setData('nomePaiNoiva', e.target.value)}
+                                                                                      placeholder="Nome completo"
+                                                                                      required/>{fieldError('nomePaiNoiva')}
+                    </label><label className="field-label">Nome da mãe da noiva<input className="field-input"
+                                                                                      value={form.data.nomeMaeNoiva}
+                                                                                      onChange={(e) => form.setData('nomeMaeNoiva', e.target.value)}
+                                                                                      placeholder="Nome completo"
+                                                                                      required/>{fieldError('nomeMaeNoiva')}
                     </label><label className="field-label">Data do evento<DatePicker value={form.data.data}
                                                                                      onChange={(value) => form.setData('data', value)}/>{fieldError('data')}
                     </label><label className="field-label">Local<input className="field-input" value={form.data.local}
@@ -247,7 +275,8 @@ export default function Convite({inviteTypes, convite, mesas, convidados}: Props
                         key={image.id}>{image.name}</span>)}</div> : null}</section>
                 <section className="form-card">
                     <div className="form-card-heading"><UsersRound/>
-                        <div><h2>Contactos</h2><p>Defina os contactos dos noivos, pais do noivo e pais da noiva.</p>
+                        <div><h2>Contactos</h2><p>Defina os contactos dos noivos, pai e mãe do noivo, pai e mãe da
+                            noiva.</p>
                         </div>
                     </div>
                     <div className="repeater-list">{form.data.contacts.map((contact, index) => <div
@@ -257,9 +286,7 @@ export default function Convite({inviteTypes, convite, mesas, convidados}: Props
                                     onClick={() => form.setData('contacts', form.data.contacts.filter((_, itemIndex) => itemIndex !== index))}
                                     title="Remover contacto"><Trash2 className="size-4"/></button>
                         </div>
-                        <div className="form-grid"><label className="field-label">Categoria<SelectField
-                            value={contact.categoria} onChange={(value) => updateContact(index, 'categoria', value)}
-                            options={contactCategories}/></label><label className="field-label">Nome<input
+                        <div className="form-grid"><label className="field-label">Nome<input
                             className="field-input" value={contact.nome}
                             onChange={(e) => updateContact(index, 'nome', e.target.value)}
                             placeholder="Nome do contacto"/></label><label className="field-label">Telefone<input
