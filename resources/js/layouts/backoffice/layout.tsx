@@ -1,5 +1,18 @@
 import {Link, router, usePage} from '@inertiajs/react';
-import {LayoutDashboard, LogOut, Menu, Moon, ShieldCheck, Sun, Users, UsersRound, X} from 'lucide-react';
+import {
+    ChevronDown,
+    ChevronRight,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Moon,
+    Settings2,
+    ShieldCheck,
+    Sun,
+    Users,
+    UsersRound,
+    X
+} from 'lucide-react';
 import {type PropsWithChildren, useState} from 'react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {Button} from '@/components/ui/button';
@@ -8,12 +21,14 @@ import {useInitials} from '@/hooks/use-initials';
 import {logout} from '@/routes';
 import type {Auth} from '@/types/auth';
 
-const nav = [
-    {label: 'Dashboard', href: '/backoffice', icon: LayoutDashboard},
+const nav = [{label: 'Dashboard', href: '/backoffice', icon: LayoutDashboard}];
+const accessNav = [
     {label: 'Utilizadores', href: '/backoffice/users', icon: Users},
     {label: 'Grupos de utilizadores', href: '/backoffice/groups', icon: UsersRound},
     {label: 'Permissões', href: '/backoffice/permissions', icon: ShieldCheck},
 ];
+
+const currentPathStartsWithAccess = (path: string): boolean => accessNav.some((item) => path === item.href || path.startsWith(`${item.href}/`));
 
 export default function BackofficeLayout({children}: PropsWithChildren) {
     const {auth} = usePage<{ auth: Auth }>().props;
@@ -21,6 +36,8 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
     const initials = useInitials();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithAccess(window.location.pathname));
+    const [accessOpen, setAccessOpen] = useState(() => typeof window !== 'undefined' && currentPathStartsWithAccess(window.location.pathname));
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
     const user = auth.user;
     const toggleTheme = () => updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark');
@@ -44,7 +61,33 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
                 return <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><Icon
                     className="size-4"/>{item.label}</Link>;
-            })}</nav>
+            })}
+                <div className="pt-2">
+                    <button type="button" onClick={() => setSettingsOpen((open) => !open)} aria-expanded={settingsOpen}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
+                        <Settings2 className="size-4"/><span
+                        className="flex-1 text-left">Configurações</span>{settingsOpen ?
+                        <ChevronDown className="size-4"/> : <ChevronRight className="size-4"/>}
+                    </button>
+                    {settingsOpen && <div className="ml-4 mt-1 space-y-1 border-l pl-3">
+                        <button type="button" onClick={() => setAccessOpen((open) => !open)} aria-expanded={accessOpen}
+                                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground">
+                            <ShieldCheck className="size-4"/><span
+                            className="flex-1">Controle de acesso</span>{accessOpen ?
+                            <ChevronDown className="size-4"/> : <ChevronRight className="size-4"/>}
+                        </button>
+                        {accessOpen && <div className="ml-4 space-y-1 border-l pl-3">
+                            {accessNav.map((item) => {
+                                const active = currentPath === item.href;
+                                const Icon = item.icon;
+                                return <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
+                                             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><Icon
+                                    className="size-4"/>{item.label}</Link>;
+                            })}
+                        </div>}
+                    </div>}
+                </div>
+            </nav>
             <div className="border-t p-4">
                 <div className="flex items-center gap-3"><Avatar className="size-9"><AvatarImage src={user.avatar}
                                                                                                  alt={user.name}/><AvatarFallback>{initials(user.name)}</AvatarFallback></Avatar>
