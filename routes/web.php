@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/eventtu/event-types/{eventType}', [EventtuEventoController::class, 'destroyType'])->name('eventtu.event-types.destroy');
         Route::get('/konvitte/convite/{convite?}', [KonvitteConviteController::class, 'edit'])->name('konvitte.convite');
         Route::post('/konvitte/convite/{convite?}', [KonvitteConviteController::class, 'save'])->name('konvitte.convite.save');
+        Route::post('/konvitte/convite/{convite}/mesas', [KonvitteConviteController::class, 'storeMesa'])->name('konvitte.convite.mesas.store');
+        Route::post('/konvitte/convite/{convite}/convidados', [KonvitteConviteController::class, 'storeConvidado'])->name('konvitte.convite.convidados.store');
     });
 });
 

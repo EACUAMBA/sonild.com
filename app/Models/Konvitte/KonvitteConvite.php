@@ -41,6 +41,18 @@ class KonvitteConvite extends Model
         return $this->hasOne(KonvitteConviteSlug::class, 'konvitte_convite_id');
     }
 
+    /** @return HasMany<KonvitteConviteMesa, $this> */
+    public function mesas(): HasMany
+    {
+        return $this->hasMany(KonvitteConviteMesa::class, 'konvitte_convite_id')->orderBy('nome');
+    }
+
+    /** @return HasMany<KonvitteConviteConvidado, $this> */
+    public function convidados(): HasMany
+    {
+        return $this->hasMany(KonvitteConviteConvidado::class, 'konvitte_convite_id')->latest();
+    }
+
     protected function casts(): array
     {
         return ['data' => 'datetime'];

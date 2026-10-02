@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Backoffice\Konvitte;
 use App\Http\Controllers\Controller;
 use App\Models\Konvitte\KonvitteConvite;
 use App\Models\Konvitte\KonvitteConviteSlug;
+use App\Models\Konvitte\KonvitteConviteMesa;
+use App\Models\Konvitte\KonvitteConviteConvidado;
+use App\Models\Konvitte\KonvitteConviteGuestSlug;
 use App\Models\Konvitte\KonvitteInviteType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,9 +22,12 @@ class KonvitteConviteController extends Controller
     public function edit(?KonvitteConvite $convite = null): Response
     {
         $this->ensureAccess();
+        $convite ??= KonvitteConvite::query()->latest('id')->first();
         $convite?->load(['inviteType:id,name,code', 'programItems', 'gallery', 'contacts', 'slug']);
         return Inertia::render('backoffice/Konvitte/Convite', [
             'inviteTypes' => KonvitteInviteType::query()->orderBy('name')->get(['id', 'name', 'code']),
+            'mesas' => $convite?->mesas()->get(['id', 'nome']) ?? collect(),
+            'convidados' => $convite ? $convite->convidados()->with(['mesa:id,nome', 'slug:id,konvitte_convite_convidado_id,slug'])->paginate(10, ['*'], 'guest_page')->through(fn(KonvitteConviteConvidado $guest) => ['id' => $guest->id, 'nome' => $guest->nome, 'numeroMaximoConvidados' => $guest->numero_maximo_convidados, 'mesa' => $guest->mesa?->nome, 'slug' => $guest->slug?->slug]) : ['data' => [], 'current_page' => 1, 'last_page' => 1],
             'convite' => $convite ? [
                 'id' => $convite->id, 'inviteTypeId' => $convite->konvitte_invite_type_id, 'nomeNoiva' => $convite->nome_noiva, 'nomeNoivo' => $convite->nome_noivo, 'slug' => $convite->slug?->slug,
                 'data' => $convite->data?->format('Y-m-d\TH:i'), 'local' => $convite->local, 'textoBiblico' => $convite->texto_biblico,
@@ -73,5 +79,29 @@ class KonvitteConviteController extends Controller
             foreach ($request->file('gallery', []) as $image) $convite->gallery()->create(['path' => $image->store('konvitte/gallery', 'public'), 'original_name' => $image->getClientOriginalName(), 'size' => $image->getSize()]);
         });
         return back()->with('success', 'Convite guardado com sucesso.');
+    }
+
+    public function storeMesa(Request $request, KonvitteConvite $convite): RedirectResponse
+    {
+        $this->ensureAccess();
+        $data = $request->validate(['nome' => ['required', 'string', 'max:120']]);
+        $convite->mesas()->firstOrCreate(['nome' => $data['nome']]);
+        return back()->with('success', 'Mesa adicionada com sucesso.');
+    }
+
+    public function storeConvidado(Request $request, KonvitteConvite $convite): RedirectResponse
+    {
+        $this->ensureAccess();
+        $data = $request->validate(['nome' => ['required', 'string', 'max:255'], 'mesaId' => ['nullable', 'integer', 'exists:konvitte_convite_mesas,id'], 'numeroMaximoConvidados' => ['required', 'integer', 'min:1', 'max:999']]);
+        abort_unless(!$data['mesaId'] || $convite->mesas()->whereKey($data['mesaId'])->exists(), 422);
+        DB::transaction(function () use ($data, $convite): void {
+            $guest = $convite->convidados()->create(['nome' => $data['nome'], 'konvitte_convite_mesa_id' => $data['mesaId'] ?? null, 'numero_maximo_convidados' => $data['numeroMaximoConvidados']]);
+            $baseSlug = Str::slug($guest->nome);
+            $slug = $baseSlug;
+            $counter = 2;
+            while (KonvitteConviteGuestSlug::query()->where('slug', $slug)->exists()) $slug = $baseSlug . '-' . ($counter++);
+            $guest->slug()->create(['slug' => $slug]);
+        });
+        return back()->with('success', 'Convidado adicionado com sucesso.');
     }
 }

@@ -3,6 +3,8 @@ import {CalendarDays, FileImage, HeartHandshake, Plus, Save, Trash2, UsersRound}
 import {type ChangeEvent, type FormEvent} from 'react';
 import DatePicker from '@/components/backoffice/DatePicker';
 import SelectField from '@/components/backoffice/SelectField';
+import GuestManagement from '@/components/backoffice/Konvitte/GuestManagement';
+import MesaManagement from '@/components/backoffice/Konvitte/MesaManagement';
 
 type InviteType = { id: number; name: string; code: string };
 type ProgramItem = { hora: string; nome: string; localizacao: string; googleMapsLink: string; icon: string };
@@ -31,7 +33,16 @@ type ExistingInvite =
         gallery: ExistingGallery[]
     }
     | null;
-type Props = { inviteTypes: InviteType[]; convite: ExistingInvite };
+type Props = {
+    inviteTypes: InviteType[];
+    convite: ExistingInvite;
+    mesas: { id: number; nome: string }[];
+    convidados: {
+        data: { id: number; nome: string; numeroMaximoConvidados: number; mesa: string | null; slug: string }[];
+        current_page: number;
+        last_page: number
+    }
+};
 type FormData = {
     inviteTypeId: string;
     nomeNoiva: string;
@@ -82,7 +93,7 @@ const initialData = (convite: ExistingInvite): FormData => ({
     contacts: convite?.contacts?.length ? convite.contacts : [emptyContact()]
 });
 
-export default function Convite({inviteTypes, convite}: Props) {
+export default function Convite({inviteTypes, convite, mesas, convidados}: Props) {
     const form = useForm<FormData>(initialData(convite));
     const setFile = (key: 'fotoCapa' | 'fotoInicial' | 'fotoInformacoes' | 'musica', event: ChangeEvent<HTMLInputElement>) => form.setData(key, event.target.files?.[0] ?? null);
     const setGallery = (event: ChangeEvent<HTMLInputElement>) => form.setData('gallery', Array.from(event.target.files ?? []));
@@ -269,6 +280,12 @@ export default function Convite({inviteTypes, convite}: Props) {
                         className="mr-2 size-4"/>{form.processing ? 'A guardar…' : 'Guardar configuração'}</button>
                 </div>
             </form>
+            {convite ? <><MesaManagement conviteId={convite.id} mesas={mesas}/><GuestManagement conviteId={convite.id}
+                                                                                                convidados={convidados}
+                                                                                                mesas={mesas}/></> :
+                <section className="form-card border-dashed"><h2 className="font-semibold">Mesas e convidados</h2><p
+                    className="mt-2 text-sm text-muted-foreground">Guarde primeiro os dados principais do convite.
+                    Depois desta gravação, as tabelas de mesas e convidados aparecerão aqui.</p></section>}
         </div>
     </>;
 }
