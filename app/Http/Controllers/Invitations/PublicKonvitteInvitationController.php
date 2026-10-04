@@ -65,6 +65,8 @@ class PublicKonvitteInvitationController extends Controller
                 'heroImage' => $invitation->fileFor('hero')?->url(),
                 'informationImage' => $invitation->fileFor('information')?->url(),
                 'music' => $invitation->fileFor('music')?->url(),
+                'musicTitle' => $invitation->music_title ?: ($invitation->fileFor('music') ? pathinfo($invitation->fileFor('music')->name, PATHINFO_FILENAME) : null),
+                'musicArtist' => $invitation->music_artist,
                 'coupleText' => $invitation->couple_text,
                 'celebrationText' => $invitation->celebration_text,
                 'instructions' => $invitation->instructions,

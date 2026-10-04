@@ -53,6 +53,7 @@ class KonvitteInvitationController extends Controller
                 'id' => $invitation->id, 'inviteTypeId' => $invitation->konvitte_invite_type_id, 'nomeNoiva' => $invitation->bride_name, 'nomeNoivo' => $invitation->groom_name, 'nomePaiNoivo' => $invitation->groom_father_name, 'nomeMaeNoivo' => $invitation->groom_mother_name, 'nomePaiNoiva' => $invitation->bride_father_name, 'nomeMaeNoiva' => $invitation->bride_mother_name, 'slug' => $invitation->slug?->slug,
                 'data' => $invitation->event_date?->format('Y-m-d\TH:i'), 'local' => $invitation->venue, 'googleMapsLink' => $invitation->google_maps_link, 'textoBiblico' => $invitation->bible_text,
                 'livroBiblico' => $invitation->bible_reference, 'fotoCapa' => $invitation->fileFor('cover')?->path, 'fotoInicial' => $invitation->fileFor('hero')?->path,
+                'musicTitle' => $invitation->music_title, 'musicArtist' => $invitation->music_artist,
                 'musica' => $invitation->fileFor('music')?->path, 'textoCasal' => $invitation->couple_text, 'fotoInformacoes' => $invitation->fileFor('information')?->path,
                 'rsvpEnabled' => $invitation->rsvp_enabled,
                 'textoCelebre' => $invitation->celebration_text, 'textoOrientacoes' => $invitation->instructions,
@@ -69,6 +70,8 @@ class KonvitteInvitationController extends Controller
         $data = $request->validate([
             'inviteTypeId' => ['required', 'integer', 'exists:konvitte_invite_types,id'], 'nomeNoiva' => ['required', 'string', 'max:255'], 'nomeNoivo' => ['required', 'string', 'max:255'], 'nomePaiNoivo' => ['required', 'string', 'max:255'], 'nomeMaeNoivo' => ['required', 'string', 'max:255'], 'nomePaiNoiva' => ['required', 'string', 'max:255'], 'nomeMaeNoiva' => ['required', 'string', 'max:255'], 'data' => ['required', 'date'], 'local' => ['required', 'string', 'max:255'],
             'rsvpEnabled' => ['sometimes', 'boolean'],
+            'musicTitle' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'musicArtist' => ['sometimes', 'nullable', 'string', 'max:255'],
             'googleMapsLink' => ['nullable', 'url:http,https', 'max:500'],
             'textoBiblico' => ['nullable', 'string'], 'livroBiblico' => ['nullable', 'string', 'max:120'], 'textoCasal' => ['nullable', 'string'], 'textoCelebre' => ['required', 'string'], 'textoOrientacoes' => ['nullable', 'string'],
             'fotoCapa' => ['nullable', 'image', 'max:5120'], 'fotoInicial' => ['nullable', 'image', 'max:5120'], 'fotoInformacoes' => ['nullable', 'image', 'max:5120'], 'musica' => ['nullable', 'file', 'mimes:mp3,wav,ogg', 'max:20480'],
@@ -80,6 +83,9 @@ class KonvitteInvitationController extends Controller
             $invitation ??= new KonvitteInvitation();
             $invitation->fill(['konvitte_invite_type_id' => $data['inviteTypeId'], 'bride_name' => $data['nomeNoiva'], 'groom_name' => $data['nomeNoivo'], 'groom_father_name' => $data['nomePaiNoivo'], 'groom_mother_name' => $data['nomeMaeNoivo'], 'bride_father_name' => $data['nomePaiNoiva'], 'bride_mother_name' => $data['nomeMaeNoiva'], 'event_date' => $data['data'], 'venue' => $data['local'], 'google_maps_link' => $data['googleMapsLink'] ?? null, 'bible_text' => $data['textoBiblico'] ?? null, 'bible_reference' => $data['livroBiblico'] ?? null, 'couple_text' => $data['textoCasal'] ?? null, 'celebration_text' => $data['textoCelebre'], 'instructions' => $data['textoOrientacoes'] ?? null]);
             if (array_key_exists('rsvpEnabled', $data)) $invitation->rsvp_enabled = (bool)$data['rsvpEnabled'];
+            foreach (['musicTitle' => 'music_title', 'musicArtist' => 'music_artist'] as $input => $column) {
+                if (array_key_exists($input, $data)) $invitation->{$column} = $data[$input];
+            }
             $invitation->save();
             foreach (['fotoCapa' => 'cover', 'fotoInicial' => 'hero', 'fotoInformacoes' => 'information', 'musica' => 'music'] as $input => $role) {
                 if ($request->hasFile($input)) {

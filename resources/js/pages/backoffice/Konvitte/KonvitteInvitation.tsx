@@ -45,6 +45,8 @@ type ExistingInvite =
         fotoCapa: string | null;
         fotoInicial: string | null;
         musica: string | null;
+        musicTitle: string | null;
+        musicArtist: string | null;
         textoCasal: string | null;
         fotoInformacoes: string | null;
         textoCelebre: string;
@@ -80,6 +82,8 @@ type FormData = {
     fotoInicial: File | null;
     fotoInformacoes: File | null;
     musica: File | null;
+    musicTitle: string;
+    musicArtist: string;
     gallery: File[];
     program: ProgramItem[];
     contacts: Contact[]
@@ -112,6 +116,8 @@ const initialData = (convite: ExistingInvite): FormData => ({
     fotoInicial: null,
     fotoInformacoes: null,
     musica: null,
+    musicTitle: convite?.musicTitle ?? '',
+    musicArtist: convite?.musicArtist ?? '',
     gallery: [],
     program: convite?.program?.length ? convite.program : [emptyProgram()],
     contacts: convite?.contacts?.length ? convite.contacts : [emptyContact()]
@@ -213,6 +219,8 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
                                  md={12}>{fileField('fotoInformacoes', 'Foto da área dos noivos', 'image/*')}</Col>
                             <Col xs={24}
                                  md={12}>{fileField('musica', 'Música de fundo', 'audio/mpeg,audio/wav,audio/ogg')}</Col>
+                            <Col xs={24} md={12}>{textField('musicTitle', 'Título da música (opcional)')}</Col>
+                            <Col xs={24} md={12}>{textField('musicArtist', 'Artista (opcional)')}</Col>
                         </Row>
                     </Card>
                     <Card title="Textos e celebração">
