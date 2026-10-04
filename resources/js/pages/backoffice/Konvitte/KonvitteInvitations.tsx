@@ -1,3 +1,4 @@
+import {tableActionsColumn} from '@/components/backoffice/tableActionsColumn';
 import {Head, router} from '@inertiajs/react';
 import {DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined} from '@ant-design/icons';
 import {App, Button, Card, Flex, Grid, Table, Typography} from 'antd';
@@ -66,9 +67,10 @@ export default function KonvitteInvitations({invitations}: Props) {
                                                dateTime={value}>{value.split('-').reverse().join('/')}</time> : '—'
                                        },
                                        {
-                                           title: 'Ações',
-                                           key: 'actions',
-                                           render: (_, invitation) => <Flex wrap gap="small">
+                                           ...tableActionsColumn,
+                                           width: screens.lg ? 340 : 150,
+                                           render: (_, invitation) => <Flex vertical={!screens.lg} wrap gap="small"
+                                                                            justify="end" align="end">
                                                <Button icon={<EyeOutlined/>}
                                                        onClick={() => router.get(`/backoffice/konvitte/guests/${invitation.id}`)}>Convidados</Button>
                                                <Button icon={<EditOutlined/>}

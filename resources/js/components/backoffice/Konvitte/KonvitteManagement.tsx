@@ -1,3 +1,4 @@
+import {tableActionsColumn} from '@/components/backoffice/tableActionsColumn';
 import {Head, router, useForm} from '@inertiajs/react';
 import {useRef, useState} from 'react';
 import {
@@ -207,15 +208,6 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                     {isGuest ? <AntTable rowKey="id" dataSource={guests.data} pagination={false} scroll={{x: 720}}
                                          locale={{emptyText: 'Ainda não existem convidados.'}}
                                          columns={[
-                                             {
-                                                 title: 'Ações',
-                                                 key: 'actions',
-                                                 fixed: 'left',
-                                                 width: 110,
-                                                 render: (_, guest) => <Button icon={<EditOutlined/>} disabled={busy}
-                                                                               onClick={() => editGuest(guest)}
-                                                                               aria-label={`Editar ${guest.name}`}>Editar</Button>
-                                             },
                                              {title: 'Nome', dataIndex: 'name'},
                                              {
                                                  title: 'Mesa',
@@ -233,13 +225,18 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                                                          indisponível</Typography.Text>
                                              },
                                              {
-                                                 title: 'Convite',
-                                                 key: 'invitation',
-                                                 render: (_, guest) => invitation.slug && guest.slug &&
-                                                     <Button type="link" href={guestRoute.url({
+                                                 ...tableActionsColumn,
+                                                 width: screens.lg ? 260 : 140,
+                                                 render: (_, guest) => <Flex vertical={!screens.lg} wrap gap="small"
+                                                                             justify="end" align="end">
+                                                     <Button icon={<EditOutlined/>} disabled={busy}
+                                                             onClick={() => editGuest(guest)}
+                                                             aria-label={`Editar ${guest.name}`}>Editar</Button>
+                                                     {invitation.slug && guest.slug && <Button href={guestRoute.url({
                                                          slug: invitation.slug,
                                                          guestSlug: guest.slug
-                                                     })} target="_blank" rel="noreferrer">Abrir convite</Button>
+                                                     })} target="_blank" rel="noreferrer">Abrir convite</Button>}
+                                                 </Flex>
                                              },
                                          ]}/> :
                         <AntTable rowKey="id" dataSource={tables} pagination={false} scroll={{x: 580}}
