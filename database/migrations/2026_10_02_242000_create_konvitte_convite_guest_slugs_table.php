@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('konvitte_convite_guest_slugs', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('konvitte_convite_convidado_id')->unique()->constrained('konvitte_convite_convidados')->cascadeOnDelete();
+            $table->foreignId('konvitte_convite_convidado_id')->unique('konvitte_guest_slugs_guest_unique')->constrained('konvitte_convite_convidados', indexName: 'konvitte_guest_slugs_guest_fk')->cascadeOnDelete();
             $table->string('slug')->unique();
             $table->timestamps();
         });

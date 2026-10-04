@@ -6,10 +6,10 @@ import SelectField from '@/components/backoffice/SelectField';
 type Mesa = { id: number; nome: string };
 type Guest = { id: number; nome: string; numeroMaximoConvidados: number; mesa: string | null; slug: string };
 type PaginatedGuests = { data: Guest[]; current_page: number; last_page: number };
-type Props = { conviteId: number; convidados: PaginatedGuests; mesas: Mesa[] };
+type Props = { conviteSlug: string | null; conviteId: number; convidados: PaginatedGuests; mesas: Mesa[] };
 const mesaOptions = (mesas: Mesa[]) => mesas.map((mesa) => ({value: String(mesa.id), label: mesa.nome}));
 
-export default function GuestManagement({conviteId, convidados, mesas}: Props) {
+export default function GuestManagement({conviteSlug, conviteId, convidados, mesas}: Props) {
     const [open, setOpen] = useState(false);
     const [mesaOpen, setMesaOpen] = useState(false);
     const guestForm = useForm({nome: '', mesaId: '', numeroMaximoConvidados: '1'});
@@ -65,7 +65,10 @@ export default function GuestManagement({conviteId, convidados, mesas}: Props) {
                     <td className="px-4 py-4 font-medium">{guest.nome}</td>
                     <td className="px-4 py-4 text-muted-foreground">{guest.mesa ?? 'Sem mesa'}</td>
                     <td className="px-4 py-4">{guest.numeroMaximoConvidados}</td>
-                    <td className="px-4 py-4"><code className="rounded bg-muted px-2 py-1 text-xs">{guest.slug}</code>
+                    <td className="px-4 py-4"><code
+                        className="rounded bg-muted px-2 py-1 text-xs">{guest.slug}</code>{conviteSlug && guest.slug &&
+                        <a className="ml-3 underline" href={`/konvitte/${conviteSlug}/convidado/${guest.slug}`}
+                           target="_blank" rel="noreferrer">Abrir convite</a>}
                     </td>
                 </tr>)}{!convidados.data.length && <tr>
                     <td className="px-4 py-10 text-center text-muted-foreground" colSpan={4}>Ainda não existem

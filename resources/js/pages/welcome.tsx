@@ -13,7 +13,18 @@ import {
 import {type FormEvent, useEffect, useMemo, useRef, useState} from 'react';
 import '../../css/invitation.css';
 
-const invitation = {
+type InvitationData = {
+    groom: string; bride: string; guest: string; date: string; dateLabel: string; dayLabel: string;
+    bible: string | null; bibleReference: string | null; table: string; invitationType: string;
+    guestLimit: string; children: string; parents: { groom: string; bride: string }; venue: string; address: string;
+    coverImage?: string | null; heroImage?: string | null; informationImage?: string | null; music?: string | null;
+    coupleText?: string | null; celebrationText?: string | null; instructions?: string | null;
+    contacts?: { name: string; phone: string | null; email: string | null }[];
+    program?: { time: string; title: string; description: string; mapUrl?: string | null }[];
+    gallery?: { src: string; alt: string }[];
+};
+
+const fallbackInvitation: InvitationData = {
     groom: 'Edilson',
     bride: 'Ilda',
     guest: 'Leia Pedro Munguambe',
@@ -30,7 +41,11 @@ const invitation = {
     venue: 'Jardins da Baía',
     address: 'Avenida Marginal, Maputo'
 };
-const schedule = [{time: '15:00', title: 'Cerimónia', description: 'Celebração na Igreja de São José.'}, {
+const fallbackSchedule: NonNullable<InvitationData['program']> = [{
+    time: '15:00',
+    title: 'Cerimónia',
+    description: 'Celebração na Igreja de São José.'
+}, {
     time: '16:30',
     title: 'Fotografias',
     description: 'Registos com a família e pessoas especiais.'
@@ -39,7 +54,7 @@ const schedule = [{time: '15:00', title: 'Cerimónia', description: 'Celebraçã
     title: 'Jantar',
     description: 'Uma mesa preparada para celebrar o amor.'
 }, {time: '21:00', title: 'Festa', description: 'Música, dança e alegria até ao fim da noite.'}];
-const gallery = [{
+const fallbackGallery = [{
     src: '/images/invitation-cover.jpeg',
     alt: 'Edilson e Ilda junto ao mar'
 }, {src: '/images/invitation-cover.jpeg', alt: 'Momento especial do casal'}, {
@@ -89,8 +104,8 @@ function SectionHeading({eyebrow, title, icon}: { eyebrow: string; title: string
     </p><h2>{title}</h2></div>;
 }
 
-function Countdown() {
-    const target = useMemo(() => new Date(invitation.date).getTime(), []);
+function Countdown({date}: { date: string }) {
+    const target = useMemo(() => new Date(date).getTime(), [date]);
     const [remaining, setRemaining] = useState(() => Math.max(0, target - Date.now()));
     useEffect(() => {
         const timer = window.setInterval(() => setRemaining(Math.max(0, target - Date.now())), 1000);
@@ -109,19 +124,28 @@ function Countdown() {
     </div>)}</div>;
 }
 
-function CalendarButton() {
-    const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Sonild Eventtu//Wedding//PT\nBEGIN:VEVENT\nDTSTART:20270626T150000\nSUMMARY:Casamento de Edilson e Ilda\nLOCATION:${invitation.venue}, ${invitation.address}\nEND:VEVENT\nEND:VCALENDAR`;
+function CalendarButton({invitation}: { invitation: InvitationData }) {
+    const icsDate = new Date(invitation.date).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Sonild Eventtu//Wedding//PT\nBEGIN:VEVENT\nDTSTART:${icsDate}\nSUMMARY:Casamento de ${invitation.groom} e ${invitation.bride}\nLOCATION:${invitation.venue}, ${invitation.address}\nEND:VEVENT\nEND:VCALENDAR`;
     return <a className="invitation-button invitation-button-light"
               href={`data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`}
-              download="edilson-ilda.ics"><CalendarDays size={17}/>Adicionar ao calendário</a>;
+              download={`${invitation.groom}-${invitation.bride}.ics`}><CalendarDays size={17}/>Adicionar ao calendário</a>;
 }
 
-export default function Welcome() {
+export default function Welcome({invitationData}: { invitationData?: InvitationData }) {
+    const invitation = invitationData ?? fallbackInvitation;
+    const schedule = invitationData ? (invitation.program ?? []) : fallbackSchedule;
+    const gallery = invitationData ? (invitation.gallery ?? []) : fallbackGallery;
+    const eventDate = new Date(invitation.date);
+    const dateOptions = {timeZone: 'Africa/Maputo'};
+    const monthLabel = eventDate.toLocaleDateString('pt-PT', {...dateOptions, month: 'long'});
+    const dayNumber = eventDate.toLocaleDateString('pt-PT', {...dateOptions, day: 'numeric'});
+    const yearLabel = eventDate.toLocaleDateString('pt-PT', {...dateOptions, year: 'numeric'});
     const [opened, setOpened] = useState(false);
     const [galleryIndex, setGalleryIndex] = useState(0);
     const [rsvp, setRsvp] = useState('CONFIRMED');
     const [rsvpMessage, setRsvpMessage] = useState('');
-    const [messages, setMessages] = useState(initialMessages);
+    const [messages, setMessages] = useState(invitationData ? [] : initialMessages);
     const [messageName, setMessageName] = useState('');
     const [messageText, setMessageText] = useState('');
     const contentRef = useRef<HTMLDivElement>(null);
@@ -129,9 +153,10 @@ export default function Welcome() {
         if (opened) contentRef.current?.scrollIntoView({behavior: 'smooth'});
     }, [opened]);
     useEffect(() => {
+        if (gallery.length < 2) return;
         const timer = window.setInterval(() => setGalleryIndex((current) => (current + 1) % gallery.length), 5000);
         return () => window.clearInterval(timer);
-    }, []);
+    }, [gallery.length]);
     const submitRsvp = (event: FormEvent) => {
         event.preventDefault();
         window.alert(`Obrigado, ${invitation.guest}! A sua resposta foi registada.`);
@@ -143,21 +168,22 @@ export default function Welcome() {
         setMessageName('');
         setMessageText('');
     };
-    return <><Head title="Edilson & Ilda — Convite de casamento">
-        <meta name="description" content="Convite de casamento de Edilson e Ilda."/>
+    return <><Head title={`${invitation.groom} & ${invitation.bride} — Convite de casamento`}>
+        <meta name="description" content={`Convite de casamento de ${invitation.groom} e ${invitation.bride}.`}/>
     </Head>
         <main className="invitation" lang="pt">{!opened ?
-            <section className="invitation-stage invitation-cover-stage" aria-label="Abertura do convite">
+            <section className="invitation-stage invitation-cover-stage" aria-label="Abertura do convite"
+                     style={invitation.coverImage ? {backgroundImage: `linear-gradient(180deg, #1e2a1d66, #1e2a1dcc), url(${JSON.stringify(invitation.coverImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, #7c8a66, #263d2c)'} : undefined}>
                 <div className="invitation-frame" aria-hidden="true"/>
                 <Flowers className="flowers flowers-left"/>
                 <div className="flowers-right"><Flowers className="flowers"/></div>
                 <div className="invitation-content"><p className="save-the-date"><Sparkles size={13}/> Save the date</p>
                     <div className="invitation-eyebrow"><span/> UM AMOR, UMA VIDA <span/></div>
-                    <h1>Edilson <span>&amp;</span> Ilda</h1>
-                    <div className="wedding-date"><span>Junho</span><span
-                        className="date-star">✳</span><strong>26</strong><span
-                        className="date-star">✳</span><span>2027</span></div>
-                    <p className="wedding-day">SÁBADO</p><p
+                    <h1>{invitation.groom} <span>&amp;</span> {invitation.bride}</h1>
+                    <div className="wedding-date"><span>{monthLabel}</span><span
+                        className="date-star">✳</span><strong>{dayNumber}</strong><span
+                        className="date-star">✳</span><span>{yearLabel}</span></div>
+                    <p className="wedding-day">{invitation.dayLabel}</p><p
                         className="bible-quote">{invitation.bible}<small>{invitation.bibleReference}</small></p><p
                         className="invitation-label">Cordialmente convidam</p><h2
                         className="guest-name">{invitation.guest}</h2>
@@ -165,16 +191,19 @@ export default function Welcome() {
                         size={17}/> Abrir <ChevronRight size={17}/></button>
                 </div>
             </section> : <div ref={contentRef} className="invitation-page">
-                <header className="invitation-hero"><Flowers className="flowers flowers-left"/>
+                <header className="invitation-hero"
+                        style={invitation.heroImage ? {backgroundImage: `linear-gradient(180deg, #1e2a1d33, #1e2a1dcc), url(${JSON.stringify(invitation.heroImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, #7c8a66, #263d2c)'} : undefined}>
+                    <Flowers className="flowers flowers-left"/>
                     <div className="hero-photo"/>
                     <div className="hero-copy"><p className="save-the-date"><Sparkles size={13}/> Save the date</p>
-                        <h1>Edilson <span>&amp;</span> Ilda</h1><p>{invitation.bible}</p>
+                        <h1>{invitation.groom} <span>&amp;</span> {invitation.bride}</h1><p>{invitation.bible}</p>
                         <small>{invitation.bibleReference}</small></div>
                 </header>
                 <section className="invitation-section couple-section"><SectionHeading eyebrow="A nossa história"
                                                                                        title="Com as nossas famílias"
                                                                                        icon={<Heart
                                                                                            className="section-icon"/>}/>
+                    {invitation.coupleText && <p>{invitation.coupleText}</p>}
                     <div className="couple-names">
                         <div><span>O noivo</span><h3>{invitation.groom}</h3><p>Filho
                             de<br/><strong>{invitation.parents.groom}</strong></p></div>
@@ -187,6 +216,12 @@ export default function Welcome() {
                                                                                       title="Celebre connosco"
                                                                                       icon={<Sparkles
                                                                                           className="section-icon"/>}/>
+                    {invitation.celebrationText && <p>{invitation.celebrationText}</p>}
+                    {invitation.informationImage && <img src={invitation.informationImage} alt="Os noivos" style={{
+                        maxWidth: '100%',
+                        maxHeight: 400,
+                        margin: '20px auto'
+                    }}/>}
                     <p className="guest-greeting">Querido(a) <strong>{invitation.guest}</strong>,</p><p>Este dia será
                         ainda mais especial com a sua presença.</p>
                     <div className="guest-card">
@@ -200,20 +235,24 @@ export default function Welcome() {
                                                                                      title="A nossa data"
                                                                                      icon={<CalendarDays
                                                                                          className="section-icon"/>}/>
-                    <div className="big-date"><span>Junho</span><strong>26</strong><span>2027</span></div>
+                    <div className="big-date">
+                        <span>{monthLabel}</span><strong>{dayNumber}</strong><span>{yearLabel}</span></div>
                     <p className="wedding-day">{invitation.dayLabel}</p><p>{invitation.venue}<br/>{invitation.address}
-                    </p><CalendarButton/></section>
+                    </p><CalendarButton invitation={invitation}/></section>
                 <section className="invitation-section schedule-section"><SectionHeading eyebrow="O programa"
                                                                                          title="Um dia para recordar"/>
                     <div className="timeline">{schedule.map((item) => <div className="timeline-item" key={item.time}>
                         <time>{item.time}</time>
-                        <div><h3>{item.title}</h3><p>{item.description}</p></div>
+                        <div><h3>{item.title}</h3><p>{item.description}</p>{item.mapUrl &&
+                            <a href={item.mapUrl} target="_blank" rel="noreferrer">Ver localização</a>}</div>
                     </div>)}</div>
                 </section>
                 <section className="invitation-section countdown-section"><SectionHeading eyebrow="A contagem começou"
-                                                                                          title="Até ao nosso sim"/><Countdown/>
+                                                                                          title="Até ao nosso sim"/><Countdown
+                    date={invitation.date}/>
                 </section>
-                <section className="invitation-section gallery-section"><SectionHeading eyebrow="As nossas memórias"
+                {gallery.length > 0 &&
+                    <section className="invitation-section gallery-section"><SectionHeading eyebrow="As nossas memórias"
                                                                                         title="Momentos especiais"/>
                     <div className="gallery-slider"><img src={gallery[galleryIndex].src}
                                                          alt={gallery[galleryIndex].alt}/>
@@ -228,8 +267,9 @@ export default function Welcome() {
                                                                                      aria-label={`Foto ${index + 1}`}
                                                                                      className={index === galleryIndex ? 'active' : ''}
                                                                                      onClick={() => setGalleryIndex(index)}/>)}</div>
-                </section>
-                <section className="invitation-section rsvp-section"><SectionHeading eyebrow="A sua presença"
+                    </section>}
+                {!invitationData && <>
+                    <section className="invitation-section rsvp-section"><SectionHeading eyebrow="A sua presença"
                                                                                      title="Confirme connosco"
                                                                                      icon={<MailOpen
                                                                                          className="section-icon"/>}/>
@@ -283,8 +323,21 @@ export default function Welcome() {
                         </article>
                     </div>
                 </section>
+                </>}
+                {invitation.instructions &&
+                    <section className="invitation-section"><SectionHeading eyebrow="Informações" title="Orientações"/>
+                        <p style={{whiteSpace: 'pre-line'}}>{invitation.instructions}</p></section>}
+                {!!invitation.contacts?.length &&
+                    <section className="invitation-section"><SectionHeading eyebrow="Fale connosco"
+                                                                            title="Contactos"/>{invitation.contacts.map((contact, index) =>
+                        <p key={index}><strong>{contact.name}</strong><br/>{contact.phone &&
+                            <span>{contact.phone}</span>} {contact.email &&
+                            <a href={`mailto:${contact.email}`}>{contact.email}</a>}</p>)}</section>}
+                {invitation.music && <section className="invitation-section">
+                    <audio controls src={invitation.music} preload="none" aria-label="Música do convite"/>
+                </section>}
                 <footer className="invitation-footer invitation-footer-full"><Heart size={17}/><p>Com
-                    amor,<br/><strong>Edilson &amp; Ilda</strong></p>
+                    amor,<br/><strong>{invitation.groom} &amp; {invitation.bride}</strong></p>
                     <div className="eventtu-note"><span>Um convite especial por</span><strong>Sonild
                         Eventtu</strong><small>Convites digitais para momentos inesquecíveis</small></div>
                     <button className="back-to-cover" onClick={() => setOpened(false)}>Voltar à capa</button>

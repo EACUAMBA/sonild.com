@@ -95,9 +95,13 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
                         <ChevronRight className="size-4"/>}
                     </button>
                     {konvitteOpen && <div className="ml-4 mt-1 space-y-1 border-l pl-3">
-                        <Link href="/backoffice/konvitte/convite" onClick={() => setMobileOpen(false)}
-                              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${currentPath.startsWith('/backoffice/konvitte/convite') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}><HeartHandshake
-                            className="size-4"/>Convite</Link>
+                        {[{label: 'Konvitte Invitations', path: 'invitations'}, {
+                            label: 'Konvitte Tables',
+                            path: 'tables'
+                        }, {label: 'Konvitte Guests', path: 'guests'}].map((item) => <Link key={item.path}
+                                                                                           href={`/backoffice/konvitte/${item.path}`}
+                                                                                           onClick={() => setMobileOpen(false)}
+                                                                                           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${currentPath.startsWith(`/backoffice/konvitte/${item.path}`) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>{item.label}</Link>)}
                     </div>}
                 </div>
                 <div className="pt-2">

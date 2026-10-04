@@ -1,0 +1,113 @@
+<?php
+
+use App\Models\Konvitte\KonvitteInvitation;
+use App\Models\Konvitte\KonvitteInviteType;
+use App\Models\Permission;
+use App\Models\User;
+use App\Models\UserGroup;
+use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    $this->withSession(['_token' => 'konvitte-test-token'])->withHeader('X-CSRF-TOKEN', 'konvitte-test-token');
+});
+
+function konvitteAdmin(): User
+{
+    $user = User::factory()->create();
+    $group = UserGroup::create(['name' => 'Konvitte managers']);
+    $permission = Permission::create(['name' => 'Manage', 'scope' => 'backoffice', 'module' => 'ACL', 'resource' => 'user', 'action' => 'view']);
+    $group->permissions()->attach($permission);
+    $user->userGroups()->attach($group);
+    return $user;
+}
+
+function konvitteManagedInvitation(): KonvitteInvitation
+{
+    $type = KonvitteInviteType::firstOrCreate(['code' => 'WEDDING'], ['name' => 'Wedding']);
+    return KonvitteInvitation::create(['konvitte_invite_type_id' => $type->id, 'groom_name' => 'Edilson', 'bride_name' => 'Ilda', 'event_date' => '2027-06-26 15:00:00', 'venue' => 'Maputo']);
+}
+
+it('serves separate screens and preserves invitation context', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $other = konvitteManagedInvitation();
+    $other->tables()->create(['name' => 'Other table']);
+    $this->get("/backoffice/konvitte/tables/{$invitation->id}")->assertOk()->assertInertia(fn(Assert $page) => $page->component('backoffice/Konvitte/KonvitteTables')->where('invitation.id', $invitation->id)->has('tables', 0));
+    $this->post("/backoffice/konvitte/tables/{$invitation->id}", ['name' => 'Family'])->assertSessionHasNoErrors();
+    $table = $invitation->tables()->firstOrFail();
+    $this->post("/backoffice/konvitte/guests/{$invitation->id}", ['name' => 'Leia', 'tableId' => $table->id, 'maxGuests' => 3])->assertSessionHasNoErrors();
+    $this->get("/backoffice/konvitte/guests/{$invitation->id}")->assertOk()->assertInertia(fn(Assert $page) => $page->component('backoffice/Konvitte/KonvitteGuests')->has('guests.data', 1)->where('guests.data.0.table', 'Family')->where('guests.data.0.maxGuests', 3));
+    $this->get("/backoffice/konvitte/invitations/{$invitation->id}")->assertOk()->assertInertia(fn(Assert $page) => $page->component('backoffice/Konvitte/KonvitteInvitation')->missing('mesas')->missing('convidados'));
+    $this->post("/backoffice/konvitte/guests/{$invitation->id}", ['name' => 'Wrong table', 'tableId' => $other->tables()->first()->id, 'maxGuests' => 1])->assertSessionHasErrors('tableId');
+    expect($invitation->guests()->count())->toBe(1);
+});
+
+it('handles empty data and enforces access', function () {
+    $this->actingAs(konvitteAdmin())->get('/backoffice/konvitte/tables')->assertOk()->assertInertia(fn(Assert $page) => $page->where('invitation', null)->has('tables', 0));
+    $this->actingAs(User::factory()->create())->get('/backoffice/konvitte/guests')->assertForbidden();
+    $invitation = konvitteManagedInvitation();
+    $this->post("/backoffice/konvitte/tables/{$invitation->id}", ['name' => 'Forbidden'])->assertForbidden();
+});
+
+it('lists multiple invitations and opens a blank creation form', function () {
+    $this->actingAs(konvitteAdmin());
+    $first = konvitteManagedInvitation();
+    $second = konvitteManagedInvitation();
+    $this->get('/backoffice/konvitte/invitations')->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->component('backoffice/Konvitte/KonvitteInvitations')->has('invitations.data', 2)
+        ->where('invitations.total', 2)->where('invitations.data.0.id', $second->id)
+        ->where('invitations.data.0.type', 'Wedding')->where('invitations.data.0.date', '2027-06-26'));
+    $this->get('/backoffice/konvitte/invitations/create')->assertOk()->assertInertia(fn(Assert $page) => $page->where('convite', null));
+    $this->get("/backoffice/konvitte/invitations/{$first->id}")->assertOk()->assertInertia(fn(Assert $page) => $page->where('convite.id', $first->id));
+});
+
+it('deletes only the selected invitation and protects shared files', function () {
+    $this->actingAs(konvitteAdmin());
+    $first = konvitteManagedInvitation();
+    $second = konvitteManagedInvitation();
+    $first->slug()->create(['slug' => 'delete-me']);
+    $table = $first->tables()->create(['name' => 'Family']);
+    $guest = $first->guests()->create(['name' => 'Leia', 'konvitte_table_id' => $table->id, 'max_guests' => 2]);
+    $guest->slug()->create(['slug' => 'leia-delete']);
+    $file = \App\Models\File::create(['name' => 'Shared', 'path' => 'files/shared.jpg', 'format' => 'jpg']);
+    foreach ([$first, $second] as $invitation) $invitation->files()->attach($file->id, ['role' => 'cover']);
+    $this->delete("/backoffice/konvitte/invitations/{$first->id}")->assertRedirect('/backoffice/konvitte/invitations');
+    $this->assertDatabaseMissing('konvitte_invitations', ['id' => $first->id]);
+    $this->assertDatabaseMissing('konvitte_tables', ['id' => $table->id]);
+    $this->assertDatabaseMissing('konvitte_guests', ['id' => $guest->id]);
+    $this->assertDatabaseMissing('konvitte_guest_slugs', ['slug' => 'leia-delete']);
+    expect($second->fresh()->fileFor('cover')->id)->toBe($file->id);
+    $this->get('/konvitte/delete-me/convidado')->assertNotFound();
+    $this->actingAs(User::factory()->create())->delete("/backoffice/konvitte/invitations/{$second->id}")->assertForbidden();
+    expect($second->fresh())->not->toBeNull();
+});
+
+it('preserves shared public links when editing and creates separate invitations', function () {
+    $this->actingAs(konvitteAdmin());
+    $first = konvitteManagedInvitation();
+    $first->slug()->create(['slug' => 'already-shared']);
+    $payload = ['inviteTypeId' => $first->konvitte_invite_type_id, 'nomeNoiva' => 'New bride', 'nomeNoivo' => 'New groom', 'nomePaiNoivo' => 'A', 'nomeMaeNoivo' => 'B', 'nomePaiNoiva' => 'C', 'nomeMaeNoiva' => 'D', 'data' => '2028-05-01 12:00', 'local' => 'Maputo', 'textoCelebre' => 'Celebrate', 'googleMapsLink' => 'https://maps.google.com/?q=Maputo'];
+    $this->post("/backoffice/konvitte/invitations/{$first->id}", $payload)->assertSessionHasNoErrors()->assertRedirect("/backoffice/konvitte/invitations/{$first->id}");
+    expect($first->fresh()->slug->slug)->toBe('already-shared');
+    expect($first->fresh()->google_maps_link)->toBe('https://maps.google.com/?q=Maputo');
+    $this->get("/backoffice/konvitte/invitations/{$first->id}")->assertInertia(fn(Assert $page) => $page->where('convite.googleMapsLink', 'https://maps.google.com/?q=Maputo'));
+    $this->post("/backoffice/konvitte/invitations/{$first->id}", array_replace($payload, ['googleMapsLink' => 'javascript:alert(1)']))->assertSessionHasErrors('googleMapsLink');
+    $this->post('/backoffice/konvitte/invitations', $payload)->assertSessionHasNoErrors()->assertRedirect();
+    expect(KonvitteInvitation::count())->toBe(2);
+    $this->assertDatabaseHas('konvitte_invitations', ['id' => $first->id, 'groom_name' => 'New groom']);
+});
+
+it('defaults tables and guests to the latest invitation and honours explicit selection', function () {
+    $this->actingAs(konvitteAdmin());
+    $older = konvitteManagedInvitation();
+    $latest = konvitteManagedInvitation();
+    foreach (['tables', 'guests'] as $section) {
+        $this->get("/backoffice/konvitte/{$section}")->assertOk()->assertInertia(fn(Assert $page) => $page
+            ->where('invitation.id', $latest->id)->where('invitations.0.id', $latest->id));
+        $this->get("/backoffice/konvitte/{$section}/{$older->id}")->assertOk()->assertInertia(fn(Assert $page) => $page->where('invitation.id', $older->id));
+    }
+    $this->post("/backoffice/konvitte/tables/{$older->id}", ['name' => 'Selected table'])->assertSessionHasNoErrors();
+    $this->post("/backoffice/konvitte/guests/{$older->id}", ['name' => 'Selected guest', 'maxGuests' => 1])->assertSessionHasNoErrors();
+    expect($older->tables()->count())->toBe(1)->and($older->guests()->count())->toBe(1);
+    expect($latest->tables()->count())->toBe(0)->and($latest->guests()->count())->toBe(0);
+});

@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name', 'code'])]
 class KonvitteInviteType extends Model
 {
-    /** @return HasMany<KonvitteConvite, $this> */
-    public function convites(): HasMany
+    /** @return HasMany<KonvitteInvitation, $this> */
+    public function invitations(): HasMany
     {
-        return $this->hasMany(KonvitteConvite::class);
+        return $this->hasMany(KonvitteInvitation::class);
     }
 }

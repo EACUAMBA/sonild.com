@@ -1,10 +1,8 @@
-import {Head, useForm} from '@inertiajs/react';
+import {Head, Link, useForm} from '@inertiajs/react';
 import {CalendarDays, FileImage, HeartHandshake, Plus, Save, Trash2, UsersRound} from 'lucide-react';
 import {type ChangeEvent, type FormEvent} from 'react';
 import DatePicker from '@/components/backoffice/DatePicker';
 import SelectField from '@/components/backoffice/SelectField';
-import GuestManagement from '@/components/backoffice/Konvitte/GuestManagement';
-import MesaManagement from '@/components/backoffice/Konvitte/MesaManagement';
 
 type InviteType = { id: number; name: string; code: string };
 type ProgramItem = { hora: string; nome: string; localizacao: string; googleMapsLink: string; icon: string };
@@ -23,6 +21,7 @@ type ExistingInvite =
         nomeMaeNoiva: string;
         data: string;
         local: string;
+        googleMapsLink: string | null;
         textoBiblico: string | null;
         livroBiblico: string | null;
         fotoCapa: string | null;
@@ -40,12 +39,7 @@ type ExistingInvite =
 type Props = {
     inviteTypes: InviteType[];
     convite: ExistingInvite;
-    mesas: { id: number; nome: string }[];
-    convidados: {
-        data: { id: number; nome: string; numeroMaximoConvidados: number; mesa: string | null; slug: string }[];
-        current_page: number;
-        last_page: number
-    }
+
 };
 type FormData = {
     inviteTypeId: string;
@@ -57,6 +51,7 @@ type FormData = {
     nomeMaeNoiva: string;
     data: string;
     local: string;
+    googleMapsLink: string;
     textoBiblico: string;
     livroBiblico: string;
     textoCasal: string;
@@ -87,6 +82,7 @@ const initialData = (convite: ExistingInvite): FormData => ({
     nomeMaeNoiva: convite?.nomeMaeNoiva ?? '',
     data: convite?.data ?? '',
     local: convite?.local ?? '',
+    googleMapsLink: convite?.googleMapsLink ?? '',
     textoBiblico: convite?.textoBiblico ?? '',
     livroBiblico: convite?.livroBiblico ?? '',
     textoCasal: convite?.textoCasal ?? '',
@@ -101,13 +97,13 @@ const initialData = (convite: ExistingInvite): FormData => ({
     contacts: convite?.contacts?.length ? convite.contacts : [emptyContact()]
 });
 
-export default function Convite({inviteTypes, convite, mesas, convidados}: Props) {
-    const form = useForm<FormData>(initialData(convite));
+export default function KonvitteInvitation({inviteTypes, convite}: Props) {
+    const form = useForm<FormData>(`KonvitteInvitation:${convite?.id ?? 'new'}`, initialData(convite));
     const setFile = (key: 'fotoCapa' | 'fotoInicial' | 'fotoInformacoes' | 'musica', event: ChangeEvent<HTMLInputElement>) => form.setData(key, event.target.files?.[0] ?? null);
     const setGallery = (event: ChangeEvent<HTMLInputElement>) => form.setData('gallery', Array.from(event.target.files ?? []));
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        form.post(convite ? `/backoffice/konvitte/convite/${convite.id}` : '/backoffice/konvitte/convite', {forceFormData: true});
+        form.post(convite ? `/backoffice/konvitte/invitations/${convite.id}` : '/backoffice/konvitte/invitations', {forceFormData: true});
     };
     const updateProgram = (index: number, key: keyof ProgramItem, value: string) => form.setData('program', form.data.program.map((item, itemIndex) => itemIndex === index ? {
         ...item,
@@ -119,17 +115,15 @@ export default function Convite({inviteTypes, convite, mesas, convidados}: Props
     } : item));
     const fieldError = (key: keyof FormData) => form.errors[key] ?
         <p className="text-xs text-destructive">{form.errors[key]}</p> : null;
-    return <><Head title="Konvitte — Convite"/>
-        <div className="mx-auto max-w-6xl space-y-6">
+    return <><Head title="Konvitte Invitation"/>
+        <div className="mx-auto max-w-6xl space-y-6"><Link className="secondary-button"
+                                                           href="/backoffice/konvitte/invitations">Back to
+            invitations</Link>
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div><p className="text-sm text-muted-foreground">Konvitte</p><h1
-                    className="mt-1 text-3xl font-semibold tracking-tight">Configurar convite</h1><p
+                    className="mt-1 text-3xl font-semibold tracking-tight">Konvitte Invitation</h1><p
                     className="mt-2 text-muted-foreground">Configure o conteúdo do convite de casamento num único
-                    formulário.</p>{convite?.slug &&
-                    <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">Link
-                        reservado: <code
-                            className="text-foreground">sonild.test/konvitte/{convite.slug}/convidado</code> <span
-                            className="ml-1">(a página pública será ativada depois)</span></p>}</div>
+                    formulário.</p></div>
                 <button className="action-button sm:w-auto" disabled={form.processing} onClick={submit}><Save
                     className="mr-2 size-4"/>{form.processing ? 'A guardar…' : 'Guardar convite'}</button>
             </div>
@@ -138,43 +132,61 @@ export default function Convite({inviteTypes, convite, mesas, convidados}: Props
                     <div className="form-card-heading"><HeartHandshake/>
                         <div><h2>Identidade do convite</h2><p>Escolha o tipo e defina os dados principais.</p></div>
                     </div>
-                    <div className="form-grid"><label className="field-label">Tipo de convite<SelectField
-                        value={form.data.inviteTypeId} onChange={(value) => form.setData('inviteTypeId', value)}
-                        options={inviteTypes.map((type) => ({value: String(type.id), label: type.name}))}
-                        placeholder="Selecionar tipo"/>{fieldError('inviteTypeId')}</label><label
-                        className="field-label">Nome da noiva<input className="field-input" value={form.data.nomeNoiva}
-                                                                    onChange={(e) => form.setData('nomeNoiva', e.target.value)}
-                                                                    placeholder="Ex.: Ilda"/>{fieldError('nomeNoiva')}
-                    </label><label className="field-label">Nome do noivo<input className="field-input"
-                                                                               value={form.data.nomeNoivo}
-                                                                               onChange={(e) => form.setData('nomeNoivo', e.target.value)}
-                                                                               placeholder="Ex.: Edilson"/>{fieldError('nomeNoivo')}
-                    </label><label className="field-label">Nome do pai do noivo<input className="field-input"
-                                                                                      value={form.data.nomePaiNoivo}
-                                                                                      onChange={(e) => form.setData('nomePaiNoivo', e.target.value)}
-                                                                                      placeholder="Nome completo"
-                                                                                      required/>{fieldError('nomePaiNoivo')}
-                    </label><label className="field-label">Nome da mãe do noivo<input className="field-input"
-                                                                                      value={form.data.nomeMaeNoivo}
-                                                                                      onChange={(e) => form.setData('nomeMaeNoivo', e.target.value)}
-                                                                                      placeholder="Nome completo"
-                                                                                      required/>{fieldError('nomeMaeNoivo')}
-                    </label><label className="field-label">Nome do pai da noiva<input className="field-input"
-                                                                                      value={form.data.nomePaiNoiva}
-                                                                                      onChange={(e) => form.setData('nomePaiNoiva', e.target.value)}
-                                                                                      placeholder="Nome completo"
-                                                                                      required/>{fieldError('nomePaiNoiva')}
-                    </label><label className="field-label">Nome da mãe da noiva<input className="field-input"
-                                                                                      value={form.data.nomeMaeNoiva}
-                                                                                      onChange={(e) => form.setData('nomeMaeNoiva', e.target.value)}
-                                                                                      placeholder="Nome completo"
-                                                                                      required/>{fieldError('nomeMaeNoiva')}
-                    </label><label className="field-label">Data do evento<DatePicker value={form.data.data}
-                                                                                     onChange={(value) => form.setData('data', value)}/>{fieldError('data')}
-                    </label><label className="field-label">Local<input className="field-input" value={form.data.local}
-                                                                       onChange={(e) => form.setData('local', e.target.value)}
-                                                                       placeholder="Ex.: Jardins da Baía"/>{fieldError('local')}
-                    </label></div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <label className="field-label md:col-span-2">Tipo de convite
+                            <SelectField value={form.data.inviteTypeId}
+                                         onChange={(value) => form.setData('inviteTypeId', value)}
+                                         options={inviteTypes.map((type) => ({
+                                             value: String(type.id),
+                                             label: type.name
+                                         }))} placeholder="Selecionar tipo"/>
+                            {fieldError('inviteTypeId')}
+                        </label>
+                        <label className="field-label">Nome do noivo
+                            <input className="field-input" value={form.data.nomeNoivo}
+                                   onChange={(e) => form.setData('nomeNoivo', e.target.value)}
+                                   placeholder="Ex.: Edilson" required/>{fieldError('nomeNoivo')}
+                        </label>
+                        <label className="field-label">Nome da noiva
+                            <input className="field-input" value={form.data.nomeNoiva}
+                                   onChange={(e) => form.setData('nomeNoiva', e.target.value)} placeholder="Ex.: Ilda"
+                                   required/>{fieldError('nomeNoiva')}
+                        </label>
+                        <label className="field-label">Nome do pai do noivo
+                            <input className="field-input" value={form.data.nomePaiNoivo}
+                                   onChange={(e) => form.setData('nomePaiNoivo', e.target.value)}
+                                   placeholder="Nome completo" required/>{fieldError('nomePaiNoivo')}
+                        </label>
+                        <label className="field-label">Nome da mãe do noivo
+                            <input className="field-input" value={form.data.nomeMaeNoivo}
+                                   onChange={(e) => form.setData('nomeMaeNoivo', e.target.value)}
+                                   placeholder="Nome completo" required/>{fieldError('nomeMaeNoivo')}
+                        </label>
+                        <label className="field-label">Nome do pai da noiva
+                            <input className="field-input" value={form.data.nomePaiNoiva}
+                                   onChange={(e) => form.setData('nomePaiNoiva', e.target.value)}
+                                   placeholder="Nome completo" required/>{fieldError('nomePaiNoiva')}
+                        </label>
+                        <label className="field-label">Nome da mãe da noiva
+                            <input className="field-input" value={form.data.nomeMaeNoiva}
+                                   onChange={(e) => form.setData('nomeMaeNoiva', e.target.value)}
+                                   placeholder="Nome completo" required/>{fieldError('nomeMaeNoiva')}
+                        </label>
+                        <label className="field-label">Data do evento
+                            <DatePicker value={form.data.data}
+                                        onChange={(value) => form.setData('data', value)}/>{fieldError('data')}
+                        </label>
+                        <label className="field-label">Local
+                            <input className="field-input" value={form.data.local}
+                                   onChange={(e) => form.setData('local', e.target.value)} placeholder="Local do evento"
+                                   required/>{fieldError('local')}
+                        </label>
+                        <label className="field-label md:col-span-2">Link do Google Maps
+                            <input className="field-input" type="url" maxLength={500} value={form.data.googleMapsLink}
+                                   onChange={(e) => form.setData('googleMapsLink', e.target.value)}
+                                   placeholder="https://maps.google.com/..."/>{fieldError('googleMapsLink')}
+                        </label>
+                    </div>
                 </section>
                 <section className="form-card">
                     <div className="form-card-heading"><FileImage/>
@@ -307,12 +319,11 @@ export default function Convite({inviteTypes, convite, mesas, convidados}: Props
                         className="mr-2 size-4"/>{form.processing ? 'A guardar…' : 'Guardar configuração'}</button>
                 </div>
             </form>
-            {convite ? <><MesaManagement conviteId={convite.id} mesas={mesas}/><GuestManagement conviteId={convite.id}
-                                                                                                convidados={convidados}
-                                                                                                mesas={mesas}/></> :
-                <section className="form-card border-dashed"><h2 className="font-semibold">Mesas e convidados</h2><p
-                    className="mt-2 text-sm text-muted-foreground">Guarde primeiro os dados principais do convite.
-                    Depois desta gravação, as tabelas de mesas e convidados aparecerão aqui.</p></section>}
+            {convite && <nav className="flex gap-4"><Link className="secondary-button"
+                                                          href={`/backoffice/konvitte/tables/${convite.id}`}>Konvitte
+                Tables</Link><Link className="secondary-button" href={`/backoffice/konvitte/guests/${convite.id}`}>Konvitte
+                Guests</Link></nav>}
+
         </div>
     </>;
 }
