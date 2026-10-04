@@ -16,7 +16,11 @@ const choices = [
 ] as const;
 
 export default function PublicRsvp({guest, url, response}: Props) {
-    const [open, setOpen] = useState(Boolean(url && !response));
+    const [open, setOpen] = useState(false);
+    const headingRef = useRef<HTMLHeadingElement>(null);
+    const shownRef = useRef(false);
+    // A separate cookie for each personal invitation avoids hiding another guest's reminder.
+    const cookieName = url ? `sonild_rsvp_seen_${encodeURIComponent(url)}` : null;
     const [saved, setSaved] = useState(false);
     const dialogRef = useRef<HTMLDialogElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
@@ -25,9 +29,30 @@ export default function PublicRsvp({guest, url, response}: Props) {
         message: response?.message ?? ''
     });
     useEffect(() => {
+        if (!url || response || saved || open || shownRef.current || !headingRef.current) return;
+        const hasSeen = () => document.cookie.split(';').some((cookie) => cookie.trim() === `${cookieName}=1`);
+        if (hasSeen() || !('IntersectionObserver' in window)) return;
+        const observer = new IntersectionObserver((entries) => {
+            if (!entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) return;
+            if (!shownRef.current && !hasSeen()) {
+                shownRef.current = true;
+                setOpen(true);
+            }
+            observer.disconnect();
+        }, {threshold: 0.5});
+        observer.observe(headingRef.current);
+        return () => observer.disconnect();
+    }, [url, response, saved, open, cookieName]);
+    useEffect(() => {
         const dialog = dialogRef.current;
         if (!dialog) return;
-        if (open && !dialog.open) dialog.showModal();
+        if (open && !dialog.open) {
+            dialog.showModal();
+            shownRef.current = true;
+            if (cookieName) {
+                document.cookie = `${cookieName}=1; Max-Age=31536000; Path=/; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+            }
+        }
         if (!open && dialog.open) dialog.close();
         if (!open) return;
         const overflow = document.body.style.overflow;
@@ -35,7 +60,7 @@ export default function PublicRsvp({guest, url, response}: Props) {
         return () => {
             document.body.style.overflow = overflow;
         };
-    }, [open]);
+    }, [open, cookieName]);
     const close = () => {
         if (form.processing) return;
         setOpen(false);
@@ -55,7 +80,7 @@ export default function PublicRsvp({guest, url, response}: Props) {
     return <section id="confirmacao-presenca" className="invitation-section public-rsvp" aria-labelledby="rsvp-heading">
         <div className="public-rsvp-seal" aria-hidden="true"><MailOpen size={28}/></div>
         <p className="invitation-eyebrow"><span/> A sua presença <span/></p>
-        <h2 id="rsvp-heading">Um lugar à sua espera</h2>
+        <h2 ref={headingRef} id="rsvp-heading">Um lugar à sua espera</h2>
         <p className="public-rsvp-intro">{guest}, a sua presença torna este dia ainda mais especial.<br/>Diga-nos se
             podemos contar consigo.</p>
         {url ? <>
