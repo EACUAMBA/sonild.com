@@ -1,6 +1,26 @@
-import {Head, Link, router, useForm} from '@inertiajs/react';
-import {type FormEvent, useState} from 'react';
+import {Head, router, useForm} from '@inertiajs/react';
+import {useState} from 'react';
+import {
+    Alert,
+    AutoComplete,
+    Button,
+    Card,
+    Col,
+    Empty,
+    Flex,
+    Form,
+    Grid,
+    Input,
+    InputNumber,
+    Pagination,
+    Row,
+    Select,
+    Table as AntTable,
+    Typography
+} from 'antd';
+import {PlusOutlined} from '@ant-design/icons';
 import KonvitteGuestLink from './KonvitteGuestLink';
+import {guest as guestRoute} from '@/routes/konvitte';
 
 type Invitation = { id: number; name: string; slug: string | null };
 type Table = { id: number; name: string; guestCount: number; capacity: number | null; allocatedSeats: number };
@@ -33,8 +53,7 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
     const selectedTable = tables.find((table) => table.name.toLocaleLowerCase() === form.data.tableName.trim().toLocaleLowerCase());
     const isNewTable = Boolean(form.data.tableName.trim()) && !selectedTable;
     const busy = form.processing || tableForm.processing;
-    const submitGuest = (event: FormEvent) => {
-        event.preventDefault();
+    const submitGuest = () => {
         if (!invitation) return;
         form.transform((data) => ({
             ...data,
@@ -47,8 +66,7 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
             onSuccess: () => form.reset(),
         });
     };
-    const submitTable = (event: FormEvent) => {
-        event.preventDefault();
+    const submitTable = () => {
         if (!invitation) return;
         tableForm.post(`/backoffice/konvitte/tables/${invitation.id}`, {
             preserveScroll: true,
@@ -63,153 +81,146 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
         preserveState: true,
         preserveScroll: true
     });
+    const screens = Grid.useBreakpoint();
+    const fieldError = (error?: string) => ({validateStatus: error ? 'error' as const : undefined, help: error});
+    const guestFields = Object.entries(form.data).map(([name, value]) => ({name, value}));
+    const tableFields = Object.entries(tableForm.data).map(([name, value]) => ({name, value}));
     return <><Head title={`${title} — Konvitte`}/>
-        <div className="mx-auto max-w-6xl space-y-6">
-            <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div><p className="text-sm text-muted-foreground">Konvitte</p><h1
-                    className="mt-1 text-3xl font-semibold">{title}</h1>
-                    <p className="mt-2 text-muted-foreground">{isGuest ? 'Registe convidados, associe mesas e defina quantas pessoas cada convite pode levar.' : 'Crie e organize as mesas do seu convite.'}</p>
-                </div>
-                <label className="field-label w-full md:w-80 md:shrink-0">Convite
-                    <select className="field-input" value={invitation?.id ?? ''} disabled={!invitations.length || busy}
-                            onChange={(event) => router.get(`/backoffice/konvitte/${section}/${event.target.value}`)}>
-                        <option value="" disabled>Selecione um convite</option>
-                        {invitations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                    </select>
-                </label>
-            </header>
-            <nav className="form-card flex flex-wrap gap-3">
-                <Link className="secondary-button"
-                      href={`/backoffice/konvitte/invitations${invitation ? `/${invitation.id}` : '/create'}`}>Convite</Link>
-                {invitation && <Link className="secondary-button"
-                                     href={`/backoffice/konvitte/${isGuest ? 'tables' : 'guests'}/${invitation.id}`}>{isGuest ? 'Mesas' : 'Convidados'}</Link>}
-                {invitation && isGuest &&
-                    <button type="button" className="secondary-button" aria-expanded={showTableForm}
-                            onClick={() => setShowTableForm(!showTableForm)}>Adicionar apenas uma mesa</button>}
-            </nav>
+        <Flex vertical gap="large" style={{maxWidth: 1200, margin: '0 auto', width: '100%', minWidth: 0}}>
+            <Row gutter={[24, 16]} align="middle" justify="space-between">
+                <Col xs={24} md={16}><Typography.Text type="secondary">Konvitte</Typography.Text>
+                    <Typography.Title level={2}>{title}</Typography.Title>
+                    <Typography.Paragraph>{isGuest ? 'Registe convidados, associe mesas e defina quantas pessoas cada convite pode levar.' : 'Crie e organize as mesas do seu convite.'}</Typography.Paragraph></Col>
+                <Col xs={24} md={8}><Form layout="vertical"><Form.Item label="Convite">
+                    <Select aria-label="Convite" value={invitation?.id} disabled={!invitations.length || busy}
+                            showSearch={{optionFilterProp: 'label'}}
+                            placeholder="Selecione um convite"
+                            options={invitations.map((item) => ({value: item.id, label: item.name}))}
+                            onChange={(id) => router.get(`/backoffice/konvitte/${section}/${id}`)}/>
+                </Form.Item></Form></Col>
+            </Row>
+            <Flex wrap gap="small">
+                <Button
+                    onClick={() => router.get(`/backoffice/konvitte/invitations${invitation ? `/${invitation.id}` : '/create'}`)}>Convite</Button>
+                {invitation && <Button
+                    onClick={() => router.get(`/backoffice/konvitte/${isGuest ? 'tables' : 'guests'}/${invitation.id}`)}>{isGuest ? 'Mesas' : 'Convidados'}</Button>}
+                {invitation && isGuest && <Button icon={<PlusOutlined/>} aria-expanded={showTableForm}
+                                                  onClick={() => setShowTableForm(!showTableForm)}>Adicionar apenas uma
+                    mesa</Button>}
+            </Flex>
             {invitation ? <>
-                {(!isGuest || showTableForm) && <form className="form-card space-y-4" onSubmit={submitTable}>
-                    <h2 className="text-lg font-semibold">Adicionar mesa</h2>
-                    <p className="text-sm text-muted-foreground">Convite: <strong>{invitation.name}</strong></p>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="field-label">Nome da mesa<input className="field-input"
-                                                                          value={tableForm.data.name} maxLength={120}
-                                                                          required
-                                                                          onChange={(event) => tableForm.setData('name', event.target.value)}/>
-                            {tableForm.errors.name &&
-                                <span role="alert" className="text-destructive">{tableForm.errors.name}</span>}</label>
-                        <label className="field-label">Capacidade da mesa<input className="field-input" type="number"
-                                                                                min="1" max="999" required
-                                                                                value={tableForm.data.capacity}
-                                                                                onChange={(event) => tableForm.setData('capacity', event.target.value)}/>
-                            <span className="field-hint">Número de pessoas que a mesa suporta.</span>
-                            {tableForm.errors.capacity &&
-                                <span role="alert" className="text-destructive">{tableForm.errors.capacity}</span>}
-                        </label>
-                    </div>
-                    <button className="action-button sm:w-auto" type="submit"
-                            disabled={busy}>{tableForm.processing ? 'A guardar…' : 'Adicionar mesa'}</button>
-                </form>}
-                {isGuest && <form className="form-card space-y-4" onSubmit={submitGuest}>
-                    <h2 className="text-lg font-semibold">Registar convidado</h2>
-                    <p className="text-sm text-muted-foreground">Convite: <strong>{invitation.name}</strong></p>
-                    <div className="grid gap-4 sm:grid-cols-3">
-                        <label className="field-label">Nome do convidado<input className="field-input"
-                                                                               value={form.data.name} maxLength={255}
-                                                                               required
-                                                                               onChange={(event) => form.setData('name', event.target.value)}/>
-                            {form.errors.name &&
-                                <span role="alert" className="text-destructive">{form.errors.name}</span>}</label>
-                        <label className="field-label">Mesa<input className="field-input" list="invitation-tables"
-                                                                  value={form.data.tableName} maxLength={120}
-                                                                  placeholder="Escolha ou escreva uma nova mesa"
-                                                                  onChange={(event) => form.setData('tableName', event.target.value)}/>
-                            <datalist id="invitation-tables">{tables.map((table) => <option key={table.id}
-                                                                                            value={table.name}>{capacityLabel(table)} · {table.allocatedSeats} lugares
-                                previstos</option>)}</datalist>
-                            <span
-                                className="field-hint">{selectedTable ? `${capacityLabel(selectedTable)} · ${selectedTable.allocatedSeats} lugares previstos` : isNewTable ? 'A nova mesa será criada ao guardar o convidado.' : 'Deixe vazio para registar sem mesa.'}</span>
-                            {(form.errors.tableId || form.errors.tableName) && <span role="alert"
-                                                                                     className="text-destructive">{form.errors.tableId || form.errors.tableName}</span>}
-                        </label>
-                        <label className="field-label">Número máximo de convidados<input className="field-input"
-                                                                                         type="number" min="1" max="999"
-                                                                                         required
-                                                                                         value={form.data.maxGuests}
-                                                                                         onChange={(event) => form.setData('maxGuests', event.target.value)}/>
-                            <span className="field-hint">Total de pessoas deste convite, incluindo acompanhantes.</span>
-                            {form.errors.maxGuests &&
-                                <span role="alert" className="text-destructive">{form.errors.maxGuests}</span>}</label>
-                        {isNewTable &&
-                            <label className="field-label">Capacidade da nova mesa<input className="field-input"
-                                                                                         type="number" min="1" max="999"
-                                                                                         required
-                                                                                         value={form.data.tableCapacity}
-                                                                                         onChange={(event) => form.setData('tableCapacity', event.target.value)}/>
-                                <span className="field-hint">Número de pessoas que a mesa suporta.</span>
-                                {form.errors.tableCapacity &&
-                                    <span role="alert" className="text-destructive">{form.errors.tableCapacity}</span>}
-                            </label>}
-                    </div>
-                    {selectedTable?.capacity != null && selectedTable.allocatedSeats + Number(form.data.maxGuests) > selectedTable.capacity &&
-                        <p role="status" className="text-sm text-destructive">Com este convite, o número de pessoas
-                            previsto ultrapassa a capacidade da mesa.</p>}
-                    <button className="action-button sm:w-auto" type="submit"
-                            disabled={busy}>{form.processing ? 'A guardar…' : 'Registar convidado'}</button>
-                </form>}
-                <section className="form-card overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="border-b text-muted-foreground">
-                        <tr>
-                            <th className="p-3">Nome</th>
-                            {isGuest ? <>
-                                    <th className="p-3">Mesa</th>
-                                    <th className="p-3">Máximo de pessoas</th>
-                                    <th className="p-3">Ligação</th>
-                                    <th className="p-3">Convite</th>
-                                </> :
-                                <>
-                                    <th className="p-3">Capacidade</th>
-                                    <th className="p-3">Lugares previstos</th>
-                                    <th className="p-3">Convidados registados</th>
-                                </>}
-                        </tr>
-                        </thead>
-                        <tbody className="divide-y">{isGuest ? guests.data.map((guest) => <tr key={guest.id}>
-                            <td className="p-3">{guest.name}</td>
-                            <td className="p-3">{guest.table ?? 'Sem mesa'}</td>
-                            <td className="p-3">{guest.maxGuests}</td>
-                            <td className="p-3">{invitation.slug && guest.slug ?
-                                <KonvitteGuestLink key={`${invitation.slug}/${guest.slug}`}
-                                                   invitationSlug={invitation.slug} guestSlug={guest.slug}/> :
-                                <span className="text-muted-foreground">Ligação indisponível</span>}</td>
-                            <td className="p-3">{invitation.slug && guest.slug &&
-                                <a className="underline" target="_blank" rel="noreferrer"
-                                   href={`/konvitte/${invitation.slug}/convidado/${guest.slug}`}>Abrir convite</a>}</td>
-                        </tr>) : tables.map((table) => <tr key={table.id}>
-                            <td className="p-3">{table.name}</td>
-                            <td className="p-3">{capacityLabel(table)}</td>
-                            <td className="p-3">{table.allocatedSeats}</td>
-                            <td className="p-3">{table.guestCount}</td>
-                        </tr>)}{!(isGuest ? guests.data.length : tables.length) && <tr>
-                            <td className="p-8 text-center text-muted-foreground"
-                                colSpan={isGuest ? 5 : 4}>{isGuest ? 'Ainda não existem convidados.' : 'Ainda não existem mesas.'}</td>
-                        </tr>}</tbody>
-                    </table>
-                    {isGuest && guests.last_page > 1 && <div className="mt-4 flex items-center justify-between">
-                        <button className="secondary-button disabled:opacity-50"
-                                disabled={guests.current_page <= 1 || busy}
-                                onClick={() => paginate(guests.current_page - 1)}>Anterior
-                        </button>
-                        <span>Página {guests.current_page} de {guests.last_page}</span>
-                        <button className="secondary-button disabled:opacity-50"
-                                disabled={guests.current_page >= guests.last_page || busy}
-                                onClick={() => paginate(guests.current_page + 1)}>Seguinte
-                        </button>
-                    </div>}
-                </section>
-            </> : <section className="form-card">Crie e guarde um convite antes de adicionar mesas ou
-                convidados.</section>}
-        </div>
+                {(!isGuest || showTableForm) && <Card title="Adicionar mesa">
+                    <Typography.Paragraph>Convite: <Typography.Text
+                        strong>{invitation.name}</Typography.Text></Typography.Paragraph>
+                    <Form layout="vertical" fields={tableFields}
+                          onValuesChange={(values) => tableForm.setData({...tableForm.data, ...Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value == null ? '' : String(value)]))})}
+                          onFinish={submitTable} disabled={busy}>
+                        <Row gutter={16}>
+                            <Col xs={24} md={12}><Form.Item name="name" label="Nome da mesa" rules={[{
+                                required: true,
+                                whitespace: true
+                            }]} {...fieldError(tableForm.errors.name)}><Input maxLength={120}/></Form.Item></Col>
+                            <Col xs={24} md={12}><Form.Item name="capacity" label="Capacidade da mesa"
+                                                            rules={[{required: true}]}
+                                                            extra="Número de pessoas que a mesa suporta." {...fieldError(tableForm.errors.capacity)}><InputNumber
+                                min={1} max={999} precision={0} style={{width: '100%'}}/></Form.Item></Col>
+                        </Row>
+                        <Button type="primary" htmlType="submit" loading={tableForm.processing} block={!screens.sm}>Adicionar
+                            mesa</Button>
+                    </Form>
+                </Card>}
+                {isGuest && <Card title="Registar convidado">
+                    <Typography.Paragraph>Convite: <Typography.Text
+                        strong>{invitation.name}</Typography.Text></Typography.Paragraph>
+                    <Form layout="vertical" fields={guestFields}
+                          onValuesChange={(values) => form.setData({...form.data, ...Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value == null ? '' : String(value)]))})}
+                          onFinish={submitGuest} disabled={busy}>
+                        <Row gutter={16}>
+                            <Col xs={24} md={12} lg={8}><Form.Item name="name" label="Nome do convidado" rules={[{
+                                required: true,
+                                whitespace: true
+                            }]} {...fieldError(form.errors.name)}><Input maxLength={255}/></Form.Item></Col>
+                            <Col xs={24} md={12} lg={8}><Form.Item name="tableName"
+                                                                   label="Mesa" {...fieldError(form.errors.tableId || form.errors.tableName)}
+                                                                   extra={selectedTable ? `${capacityLabel(selectedTable)} · ${selectedTable.allocatedSeats} lugares previstos` : isNewTable ? 'A nova mesa será criada ao guardar o convidado.' : 'Deixe vazio para registar sem mesa.'}>
+                                <AutoComplete allowClear options={tables.map((table) => ({
+                                    value: table.name,
+                                    label: <Flex
+                                        vertical><Typography.Text>{table.name}</Typography.Text><Typography.Text
+                                        type="secondary">{capacityLabel(table)} · {table.allocatedSeats} lugares
+                                        previstos</Typography.Text></Flex>
+                                }))}
+                                              filterOption={(input, option) => String(option?.value ?? '').toLocaleLowerCase().includes(input.toLocaleLowerCase())}>
+                                    <Input maxLength={120} placeholder="Escolha ou escreva uma nova mesa"/>
+                                </AutoComplete>
+                            </Form.Item></Col>
+                            <Col xs={24} md={12} lg={8}><Form.Item name="maxGuests" label="Número máximo de convidados"
+                                                                   rules={[{required: true}]}
+                                                                   extra="Inclui o convidado e os acompanhantes." {...fieldError(form.errors.maxGuests)}><InputNumber
+                                min={1} max={999} precision={0} style={{width: '100%'}}/></Form.Item></Col>
+                            {isNewTable && <Col xs={24} md={12} lg={8}><Form.Item name="tableCapacity"
+                                                                                  label="Capacidade da nova mesa"
+                                                                                  rules={[{required: true}]} {...fieldError(form.errors.tableCapacity)}><InputNumber
+                                min={1} max={999} precision={0} style={{width: '100%'}}/></Form.Item></Col>}
+                        </Row>
+                        <Flex vertical gap="middle">
+                            {selectedTable?.capacity != null && selectedTable.allocatedSeats + Number(form.data.maxGuests) > selectedTable.capacity &&
+                                <Alert type="warning" showIcon
+                                       title="Com este convite, o número de pessoas previsto ultrapassa a capacidade da mesa."/>}
+                            <Button type="primary" htmlType="submit" loading={form.processing} block={!screens.sm}
+                                    style={{alignSelf: screens.sm ? 'flex-start' : undefined}}>Registar
+                                convidado</Button>
+                        </Flex>
+                    </Form>
+                </Card>}
+                <Card styles={{body: {padding: screens.sm ? 24 : 12, minWidth: 0}}}>
+                    {isGuest ? <AntTable rowKey="id" dataSource={guests.data} pagination={false} scroll={{x: 720}}
+                                         locale={{emptyText: 'Ainda não existem convidados.'}}
+                                         columns={[
+                                             {title: 'Nome', dataIndex: 'name'},
+                                             {
+                                                 title: 'Mesa',
+                                                 dataIndex: 'table',
+                                                 render: (value: string | null) => value ?? 'Sem mesa'
+                                             },
+                                             {title: 'Máximo de pessoas', dataIndex: 'maxGuests'},
+                                             {
+                                                 title: 'Ligação',
+                                                 key: 'link',
+                                                 render: (_, guest) => invitation.slug && guest.slug ?
+                                                     <KonvitteGuestLink invitationSlug={invitation.slug}
+                                                                        guestSlug={guest.slug}/> :
+                                                     <Typography.Text type="secondary">Ligação
+                                                         indisponível</Typography.Text>
+                                             },
+                                             {
+                                                 title: 'Convite',
+                                                 key: 'invitation',
+                                                 render: (_, guest) => invitation.slug && guest.slug &&
+                                                     <Button type="link" href={guestRoute.url({
+                                                         slug: invitation.slug,
+                                                         guestSlug: guest.slug
+                                                     })} target="_blank" rel="noreferrer">Abrir convite</Button>
+                                             },
+                                         ]}/> :
+                        <AntTable rowKey="id" dataSource={tables} pagination={false} scroll={{x: 580}}
+                                  locale={{emptyText: 'Ainda não existem mesas.'}}
+                                  columns={[{title: 'Nome', dataIndex: 'name'}, {
+                                      title: 'Capacidade',
+                                      key: 'capacity',
+                                      render: (_, table) => capacityLabel(table)
+                                  }, {
+                                      title: 'Lugares previstos',
+                                      dataIndex: 'allocatedSeats'
+                                  }, {title: 'Convidados registados', dataIndex: 'guestCount'}]}/>}
+                    {isGuest && guests.last_page > 1 &&
+                        <Flex justify="end" style={{marginTop: 16}}><Pagination current={guests.current_page}
+                                                                                total={guests.last_page * 10}
+                                                                                pageSize={10} showSizeChanger={false}
+                                                                                simple={!screens.sm} disabled={busy}
+                                                                                onChange={paginate}/></Flex>}
+                </Card>
+            </> : <Card><Empty description="Crie e guarde um convite antes de adicionar mesas ou convidados."/></Card>}
+        </Flex>
     </>;
 }

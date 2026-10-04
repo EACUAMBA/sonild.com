@@ -1,8 +1,24 @@
-import {Head, Link, useForm} from '@inertiajs/react';
-import {CalendarDays, FileImage, HeartHandshake, Plus, Save, Trash2, UsersRound} from 'lucide-react';
-import {type ChangeEvent, type FormEvent} from 'react';
-import DatePicker from '@/components/backoffice/DatePicker';
-import SelectField from '@/components/backoffice/SelectField';
+import {Head, router, useForm} from '@inertiajs/react';
+import {ArrowLeftOutlined, DeleteOutlined, PlusOutlined, SaveOutlined, UploadOutlined} from '@ant-design/icons';
+import {
+    Button,
+    Card,
+    Col,
+    DatePicker,
+    Flex,
+    Form,
+    Grid,
+    Input,
+    Row,
+    Select,
+    Tag,
+    TimePicker,
+    Typography,
+    Upload
+} from 'antd';
+import dayjs from 'dayjs';
+import type {RcFile} from 'antd/es/upload/interface';
+import type {ReactNode} from 'react';
 
 type InviteType = { id: number; name: string; code: string };
 type ProgramItem = { hora: string; nome: string; localizacao: string; googleMapsLink: string; icon: string };
@@ -99,230 +115,186 @@ const initialData = (convite: ExistingInvite): FormData => ({
 
 export default function KonvitteInvitation({inviteTypes, convite}: Props) {
     const form = useForm<FormData>(`KonvitteInvitation:${convite?.id ?? 'new'}`, initialData(convite));
-    const setFile = (key: 'fotoCapa' | 'fotoInicial' | 'fotoInformacoes' | 'musica', event: ChangeEvent<HTMLInputElement>) => form.setData(key, event.target.files?.[0] ?? null);
-    const setGallery = (event: ChangeEvent<HTMLInputElement>) => form.setData('gallery', Array.from(event.target.files ?? []));
-    const submit = (event: FormEvent) => {
-        event.preventDefault();
-        form.post(convite ? `/backoffice/konvitte/invitations/${convite.id}` : '/backoffice/konvitte/invitations', {forceFormData: true});
-    };
-    const updateProgram = (index: number, key: keyof ProgramItem, value: string) => form.setData('program', form.data.program.map((item, itemIndex) => itemIndex === index ? {
+    const screens = Grid.useBreakpoint();
+    const errors = form.errors as Record<string, string>;
+    const errorProps = (key: string) => ({
+        validateStatus: errors[key] ? 'error' as const : undefined,
+        help: errors[key]
+    });
+    const submit = () => form.post(convite ? `/backoffice/konvitte/invitations/${convite.id}` : '/backoffice/konvitte/invitations', {forceFormData: true});
+    const updateProgram = (index: number, key: keyof ProgramItem, value: string) => form.setData('program', form.data.program.map((item, i) => i === index ? {
         ...item,
         [key]: value
     } : item));
-    const updateContact = (index: number, key: keyof Contact, value: string) => form.setData('contacts', form.data.contacts.map((item, itemIndex) => itemIndex === index ? {
+    const updateContact = (index: number, key: keyof Contact, value: string) => form.setData('contacts', form.data.contacts.map((item, i) => i === index ? {
         ...item,
         [key]: value
     } : item));
-    const fieldError = (key: keyof FormData) => form.errors[key] ?
-        <p className="text-xs text-destructive">{form.errors[key]}</p> : null;
+    const textField = (key: keyof FormData, label: string, required = false, multiline = false) => <Form.Item name={key}
+                                                                                                              label={label}
+                                                                                                              rules={required ? [{
+                                                                                                                  required: true,
+                                                                                                                  whitespace: true
+                                                                                                              }] : undefined} {...errorProps(key)}>
+        {multiline ? <Input.TextArea autoSize={{minRows: 3, maxRows: 8}}/> : <Input/>}
+    </Form.Item>;
+    const fileField = (key: 'fotoCapa' | 'fotoInicial' | 'fotoInformacoes' | 'musica', label: string, accept: string) =>
+        <Form.Item label={label} {...errorProps(key)}
+                   extra={convite?.[key] ? 'Já existe um ficheiro guardado. Selecione outro para o substituir.' : undefined}>
+            <Upload accept={accept} maxCount={1} beforeUpload={() => false}
+                    fileList={form.data[key] ? [{uid: key, name: form.data[key].name, status: 'done'}] : []}
+                    onChange={({fileList}) => form.setData(key, fileList[0]?.originFileObj ?? null)}>
+                <Button icon={<UploadOutlined/>}>Selecionar ficheiro</Button>
+            </Upload>
+        </Form.Item>;
+    const nestedField = (label: string, errorKey: string, control: ReactNode) => <Form.Item
+        label={label} {...errorProps(errorKey)}>{control}</Form.Item>;
     return <><Head title="Convite"/>
-        <div className="mx-auto max-w-6xl space-y-6"><Link className="secondary-button"
-                                                           href="/backoffice/konvitte/invitations">Voltar aos
-            convites</Link>
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-                <div><p className="text-sm text-muted-foreground">Konvitte</p><h1
-                    className="mt-1 text-3xl font-semibold tracking-tight">Convite</h1><p
-                    className="mt-2 text-muted-foreground">Configure o conteúdo do convite de casamento num único
-                    formulário.</p></div>
-                <button className="action-button sm:w-auto" disabled={form.processing} onClick={submit}><Save
-                    className="mr-2 size-4"/>{form.processing ? 'A guardar…' : 'Guardar convite'}</button>
-            </div>
-            <form className="space-y-6" onSubmit={submit}>
-                <section className="form-card">
-                    <div className="form-card-heading"><HeartHandshake/>
-                        <div><h2>Identidade do convite</h2><p>Escolha o tipo e defina os dados principais.</p></div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <label className="field-label md:col-span-2">Tipo de convite
-                            <SelectField value={form.data.inviteTypeId}
-                                         onChange={(value) => form.setData('inviteTypeId', value)}
-                                         options={inviteTypes.map((type) => ({
-                                             value: String(type.id),
-                                             label: type.name
-                                         }))} placeholder="Selecionar tipo"/>
-                            {fieldError('inviteTypeId')}
-                        </label>
-                        <label className="field-label">Nome do noivo
-                            <input className="field-input" value={form.data.nomeNoivo}
-                                   onChange={(e) => form.setData('nomeNoivo', e.target.value)}
-                                   placeholder="Ex.: Edilson" required/>{fieldError('nomeNoivo')}
-                        </label>
-                        <label className="field-label">Nome da noiva
-                            <input className="field-input" value={form.data.nomeNoiva}
-                                   onChange={(e) => form.setData('nomeNoiva', e.target.value)} placeholder="Ex.: Ilda"
-                                   required/>{fieldError('nomeNoiva')}
-                        </label>
-                        <label className="field-label">Nome do pai do noivo
-                            <input className="field-input" value={form.data.nomePaiNoivo}
-                                   onChange={(e) => form.setData('nomePaiNoivo', e.target.value)}
-                                   placeholder="Nome completo" required/>{fieldError('nomePaiNoivo')}
-                        </label>
-                        <label className="field-label">Nome da mãe do noivo
-                            <input className="field-input" value={form.data.nomeMaeNoivo}
-                                   onChange={(e) => form.setData('nomeMaeNoivo', e.target.value)}
-                                   placeholder="Nome completo" required/>{fieldError('nomeMaeNoivo')}
-                        </label>
-                        <label className="field-label">Nome do pai da noiva
-                            <input className="field-input" value={form.data.nomePaiNoiva}
-                                   onChange={(e) => form.setData('nomePaiNoiva', e.target.value)}
-                                   placeholder="Nome completo" required/>{fieldError('nomePaiNoiva')}
-                        </label>
-                        <label className="field-label">Nome da mãe da noiva
-                            <input className="field-input" value={form.data.nomeMaeNoiva}
-                                   onChange={(e) => form.setData('nomeMaeNoiva', e.target.value)}
-                                   placeholder="Nome completo" required/>{fieldError('nomeMaeNoiva')}
-                        </label>
-                        <label className="field-label">Data do evento
-                            <DatePicker value={form.data.data}
-                                        onChange={(value) => form.setData('data', value)}/>{fieldError('data')}
-                        </label>
-                        <label className="field-label">Local
-                            <input className="field-input" value={form.data.local}
-                                   onChange={(e) => form.setData('local', e.target.value)} placeholder="Local do evento"
-                                   required/>{fieldError('local')}
-                        </label>
-                        <label className="field-label md:col-span-2">Link do Google Maps
-                            <input className="field-input" type="url" maxLength={500} value={form.data.googleMapsLink}
-                                   onChange={(e) => form.setData('googleMapsLink', e.target.value)}
-                                   placeholder="https://maps.google.com/..."/>{fieldError('googleMapsLink')}
-                        </label>
-                    </div>
-                </section>
-                <section className="form-card">
-                    <div className="form-card-heading"><FileImage/>
-                        <div><h2>Fotografias e música</h2><p>Todos os ficheiros de imagem têm limite máximo de 5 MB.</p>
-                        </div>
-                    </div>
-                    <div className="form-grid"><label className="field-label">Foto de capa<input className="field-input"
-                                                                                                 type="file"
-                                                                                                 accept="image/*"
-                                                                                                 onChange={(e) => setFile('fotoCapa', e)}/>{convite?.fotoCapa &&
-                        <span className="field-hint">Foto de capa já carregada.</span>}</label><label
-                        className="field-label">Foto inicial<input className="field-input" type="file" accept="image/*"
-                                                                   onChange={(e) => setFile('fotoInicial', e)}/>{convite?.fotoInicial &&
-                        <span className="field-hint">Foto inicial já carregada.</span>}</label><label
-                        className="field-label">Foto da área dos noivos<input className="field-input" type="file"
-                                                                              accept="image/*"
-                                                                              onChange={(e) => setFile('fotoInformacoes', e)}/>{convite?.fotoInformacoes &&
-                        <span className="field-hint">Foto de informações já carregada.</span>}</label><label
-                        className="field-label">Música de fundo<input className="field-input" type="file"
-                                                                      accept="audio/mpeg,audio/wav,audio/ogg"
-                                                                      onChange={(e) => setFile('musica', e)}/><span
-                        className="field-hint">MP3, WAV ou OGG até 20 MB.</span></label></div>
-                </section>
-                <section className="form-card">
-                    <div className="form-card-heading"><HeartHandshake/>
-                        <div><h2>Textos e celebração</h2><p>Conte a história e personalize a mensagem de
-                            boas-vindas.</p></div>
-                    </div>
-                    <div className="stack-fields"><label className="field-label">Texto bíblico<textarea
-                        className="field-input" rows={3} value={form.data.textoBiblico}
-                        onChange={(e) => form.setData('textoBiblico', e.target.value)}
-                        placeholder="Escreva o texto bíblico"/></label><label className="field-label">Livro e referência<input
-                        className="field-input" value={form.data.livroBiblico}
-                        onChange={(e) => form.setData('livroBiblico', e.target.value)}
-                        placeholder="Ex.: 1 Coríntios 13:4-7"/></label><label className="field-label">Texto do
-                        casal<textarea className="field-input" rows={4} value={form.data.textoCasal}
-                                       onChange={(e) => form.setData('textoCasal', e.target.value)}
-                                       placeholder="Uma mensagem dos noivos"/></label><label className="field-label">Celebre
-                        connosco<textarea className="field-input" rows={3} value={form.data.textoCelebre}
-                                          onChange={(e) => form.setData('textoCelebre', e.target.value)}/></label><label
-                        className="field-label">Orientações<textarea className="field-input" rows={4}
-                                                                     value={form.data.textoOrientacoes}
-                                                                     onChange={(e) => form.setData('textoOrientacoes', e.target.value)}
-                                                                     placeholder="Dress code, estacionamento, confirmação, etc."/></label>
-                    </div>
-                </section>
-                <section className="form-card">
-                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                        <div className="form-card-heading mb-0"><CalendarDays/>
-                            <div><h2>Programa</h2><p>Adicione atividades com hora, local, mapa e ícone.</p></div>
-                        </div>
-                        <button type="button" className="secondary-button"
-                                onClick={() => form.setData('program', [...form.data.program, emptyProgram()])}><Plus
-                            className="mr-2 size-4"/>Adicionar atividade
-                        </button>
-                    </div>
-                    <div className="repeater-list">{form.data.program.map((item, index) => <div
-                        className="repeater-item" key={index}>
-                        <div className="repeater-title">Atividade {index + 1}
-                            <button type="button"
-                                    onClick={() => form.setData('program', form.data.program.filter((_, itemIndex) => itemIndex !== index))}
-                                    title="Remover atividade"><Trash2 className="size-4"/></button>
-                        </div>
-                        <div className="form-grid"><label className="field-label">Hora<input className="field-input"
-                                                                                             type="time"
-                                                                                             value={item.hora}
-                                                                                             onChange={(e) => updateProgram(index, 'hora', e.target.value)}/></label><label
-                            className="field-label">Nome<input className="field-input" value={item.nome}
-                                                               onChange={(e) => updateProgram(index, 'nome', e.target.value)}
-                                                               placeholder="Ex.: Cerimónia"/></label><label
-                            className="field-label">Ícone<SelectField value={item.icon}
-                                                                      onChange={(value) => updateProgram(index, 'icon', value)}
-                                                                      options={icons}/></label><label
-                            className="field-label">Localização<input className="field-input" value={item.localizacao}
-                                                                      onChange={(e) => updateProgram(index, 'localizacao', e.target.value)}
-                                                                      placeholder="Ex.: Igreja de São José"/></label><label
-                            className="field-label sm:col-span-2">Link Google Maps<input className="field-input"
-                                                                                         type="url"
-                                                                                         value={item.googleMapsLink}
-                                                                                         onChange={(e) => updateProgram(index, 'googleMapsLink', e.target.value)}
-                                                                                         placeholder="https://maps.google.com/..."/></label>
-                        </div>
-                    </div>)}</div>
-                </section>
-                <section className="form-card">
-                    <div className="form-card-heading"><FileImage/>
-                        <div><h2>Galeria</h2><p>Faça upload de quantas fotografias quiser, com máximo de 5 MB por
-                            foto.</p></div>
-                    </div>
-                    <label className="upload-zone"><FileImage className="size-7 text-primary"/><span
-                        className="font-medium">Selecionar fotografias</span><small>Pode escolher várias imagens de uma
-                        vez</small><input type="file" accept="image/*" multiple
-                                          onChange={setGallery}/>{form.data.gallery.length > 0 &&
-                        <strong>{form.data.gallery.length} novas fotografias selecionadas</strong>}
-                    </label>{convite?.gallery.length ?
-                    <div className="mt-4 flex flex-wrap gap-2">{convite.gallery.map((image) => <span
-                        className="rounded-full bg-muted px-3 py-1 text-xs"
-                        key={image.id}>{image.name}</span>)}</div> : null}</section>
-                <section className="form-card">
-                    <div className="form-card-heading"><UsersRound/>
-                        <div><h2>Contactos</h2><p>Defina os contactos dos noivos, pai e mãe do noivo, pai e mãe da
-                            noiva.</p>
-                        </div>
-                    </div>
-                    <div className="repeater-list">{form.data.contacts.map((contact, index) => <div
-                        className="repeater-item" key={index}>
-                        <div className="repeater-title">Contacto {index + 1}
-                            <button type="button"
-                                    onClick={() => form.setData('contacts', form.data.contacts.filter((_, itemIndex) => itemIndex !== index))}
-                                    title="Remover contacto"><Trash2 className="size-4"/></button>
-                        </div>
-                        <div className="form-grid"><label className="field-label">Nome<input
-                            className="field-input" value={contact.nome}
-                            onChange={(e) => updateContact(index, 'nome', e.target.value)}
-                            placeholder="Nome do contacto"/></label><label className="field-label">Telefone<input
-                            className="field-input" value={contact.telefone}
-                            onChange={(e) => updateContact(index, 'telefone', e.target.value)} placeholder="+258 ..."/></label><label
-                            className="field-label">Email<input className="field-input" type="email"
-                                                                value={contact.email}
-                                                                onChange={(e) => updateContact(index, 'email', e.target.value)}
-                                                                placeholder="email@exemplo.com"/></label></div>
-                    </div>)}</div>
-                    <button type="button" className="secondary-button mt-4"
-                            onClick={() => form.setData('contacts', [...form.data.contacts, emptyContact()])}><Plus
-                        className="mr-2 size-4"/>Adicionar contacto
-                    </button>
-                </section>
-                <div className="flex justify-end">
-                    <button className="action-button sm:w-auto" disabled={form.processing} type="submit"><Save
-                        className="mr-2 size-4"/>{form.processing ? 'A guardar…' : 'Guardar configuração'}</button>
-                </div>
-            </form>
-            {convite && <nav className="flex gap-4"><Link className="secondary-button"
-                                                          href={`/backoffice/konvitte/tables/${convite.id}`}>Mesas</Link><Link
-                className="secondary-button" href={`/backoffice/konvitte/guests/${convite.id}`}>Convidados</Link></nav>}
-
-        </div>
+        <Flex vertical gap="large" style={{maxWidth: 1200, margin: '0 auto', minWidth: 0}}>
+            <Flex wrap gap="middle" justify="space-between" align="center">
+                <Button icon={<ArrowLeftOutlined/>} onClick={() => router.get('/backoffice/konvitte/invitations')}>Voltar
+                    aos convites</Button>
+                <Button type="primary" icon={<SaveOutlined/>} loading={form.processing} htmlType="submit"
+                        form="konvitte-invitation-form" block={!screens.sm}>Guardar convite</Button>
+            </Flex>
+            <div><Typography.Text type="secondary">Konvitte</Typography.Text><Typography.Title
+                level={2}>Convite</Typography.Title>
+                <Typography.Paragraph>Configure o conteúdo do convite de casamento num único
+                    formulário.</Typography.Paragraph></div>
+            <Form id="konvitte-invitation-form" layout="vertical" disabled={form.processing} onFinish={submit}
+                  fields={Object.entries(form.data).filter(([, value]) => typeof value === 'string').map(([name, value]) => ({
+                      name,
+                      value
+                  }))}
+                  onValuesChange={(values) => form.setData({...form.data, ...values})}>
+                <Flex vertical gap="large">
+                    <Card title="Identidade do convite">
+                        <Row gutter={16}>
+                            <Col span={24}><Form.Item name="inviteTypeId" label="Tipo de convite"
+                                                      rules={[{required: true}]} {...errorProps('inviteTypeId')}>
+                                <Select placeholder="Selecionar tipo" options={inviteTypes.map((type) => ({
+                                    value: String(type.id),
+                                    label: type.name
+                                }))}/>
+                            </Form.Item></Col>
+                            {([['nomeNoivo', 'Nome do noivo'], ['nomeNoiva', 'Nome da noiva'], ['nomePaiNoivo', 'Nome do pai do noivo'], ['nomeMaeNoivo', 'Nome da mãe do noivo'], ['nomePaiNoiva', 'Nome do pai da noiva'], ['nomeMaeNoiva', 'Nome da mãe da noiva']] as const).map(([key, label]) =>
+                                <Col xs={24} md={12} key={key}>{textField(key, label, true)}</Col>)}
+                            <Col xs={24} md={12}><Form.Item name="data" label="Data do evento"
+                                                            rules={[{required: true}]} {...errorProps('data')}
+                                                            getValueProps={(value: string) => ({value: value ? dayjs(value) : null})}
+                                                            getValueFromEvent={(value) => value ? value.format('YYYY-MM-DDTHH:mm') : ''}>
+                                <DatePicker showTime={{format: 'HH:mm'}} format="DD/MM/YYYY HH:mm" showNow={false}
+                                            style={{width: '100%'}} placeholder="Selecionar data e hora"/>
+                            </Form.Item></Col>
+                            <Col xs={24} md={12}>{textField('local', 'Local', true)}</Col>
+                            <Col span={24}><Form.Item name="googleMapsLink"
+                                                      label="Ligação do Google Maps" {...errorProps('googleMapsLink')}><Input
+                                type="url" maxLength={500} placeholder="https://maps.google.com/..."/></Form.Item></Col>
+                        </Row>
+                    </Card>
+                    <Card title="Fotografias e música">
+                        <Typography.Paragraph type="secondary">Imagens até 5 MB. Música em MP3, WAV ou OGG até 20
+                            MB.</Typography.Paragraph>
+                        <Row gutter={16}>
+                            <Col xs={24} md={12}>{fileField('fotoCapa', 'Foto de capa', 'image/*')}</Col>
+                            <Col xs={24} md={12}>{fileField('fotoInicial', 'Foto inicial', 'image/*')}</Col>
+                            <Col xs={24}
+                                 md={12}>{fileField('fotoInformacoes', 'Foto da área dos noivos', 'image/*')}</Col>
+                            <Col xs={24}
+                                 md={12}>{fileField('musica', 'Música de fundo', 'audio/mpeg,audio/wav,audio/ogg')}</Col>
+                        </Row>
+                    </Card>
+                    <Card title="Textos e celebração">
+                        {textField('textoBiblico', 'Texto bíblico', false, true)}
+                        {textField('livroBiblico', 'Livro e referência')}
+                        {textField('textoCasal', 'Texto do casal', false, true)}
+                        {textField('textoCelebre', 'Celebre connosco', false, true)}
+                        {textField('textoOrientacoes', 'Orientações', false, true)}
+                    </Card>
+                    <Card title="Programa">
+                        <Flex vertical gap="middle">
+                            {form.data.program.map((item, index) => <Card size="small" key={index}
+                                                                          title={`Atividade ${index + 1}`}
+                                                                          extra={<Button type="text" danger
+                                                                                         icon={<DeleteOutlined/>}
+                                                                                         aria-label={`Remover atividade ${index + 1}`}
+                                                                                         onClick={() => form.setData('program', form.data.program.filter((_, i) => i !== index))}/>}>
+                                <Row gutter={16}>
+                                    <Col xs={24} md={12}>{nestedField('Hora', `program.${index}.hora`, <TimePicker
+                                        format="HH:mm" style={{width: '100%'}}
+                                        value={item.hora ? dayjs(`2000-01-01T${item.hora}`) : null}
+                                        onChange={(value) => updateProgram(index, 'hora', value ? value.format('HH:mm') : '')}/>)}</Col>
+                                    <Col xs={24} md={12}>{nestedField('Nome', `program.${index}.nome`, <Input
+                                        value={item.nome}
+                                        onChange={(event) => updateProgram(index, 'nome', event.target.value)}/>)}</Col>
+                                    <Col xs={24} md={12}>{nestedField('Ícone', `program.${index}.icon`, <Select
+                                        value={item.icon} options={icons}
+                                        onChange={(value) => updateProgram(index, 'icon', value)}/>)}</Col>
+                                    <Col xs={24} md={12}>{nestedField('Localização', `program.${index}.localizacao`,
+                                        <Input value={item.localizacao}
+                                               onChange={(event) => updateProgram(index, 'localizacao', event.target.value)}/>)}</Col>
+                                    <Col
+                                        span={24}>{nestedField('Ligação do Google Maps', `program.${index}.googleMapsLink`,
+                                        <Input type="url" value={item.googleMapsLink}
+                                               onChange={(event) => updateProgram(index, 'googleMapsLink', event.target.value)}/>)}</Col>
+                                </Row>
+                            </Card>)}
+                            <Button icon={<PlusOutlined/>}
+                                    onClick={() => form.setData('program', [...form.data.program, emptyProgram()])}>Adicionar
+                                atividade</Button>
+                        </Flex>
+                    </Card>
+                    <Card title="Galeria">
+                        <Form.Item {...errorProps('gallery')}>
+                            <Upload.Dragger accept="image/*" multiple beforeUpload={() => false}
+                                            fileList={form.data.gallery.map((file, index) => ({
+                                                uid: `gallery-${index}`,
+                                                name: file.name,
+                                                status: 'done',
+                                                originFileObj: file as RcFile
+                                            }))}
+                                            onChange={({fileList}) => form.setData('gallery', fileList.flatMap((file) => file.originFileObj ? [file.originFileObj] : []))}>
+                                <UploadOutlined style={{fontSize: 32}}/>
+                                <Typography.Paragraph>Selecione ou arraste fotografias para aqui.</Typography.Paragraph>
+                                <Typography.Text type="secondary">Pode escolher várias imagens, até 5 MB por
+                                    fotografia.</Typography.Text>
+                            </Upload.Dragger>
+                        </Form.Item>
+                        {Object.entries(errors).filter(([key]) => key.startsWith('gallery.')).map(([key, error]) =>
+                            <Typography.Paragraph type="danger" key={key}>{error}</Typography.Paragraph>)}
+                        <Flex wrap gap="small">{convite?.gallery.map((image) => <Tag
+                            key={image.id}>{image.name}</Tag>)}</Flex>
+                    </Card>
+                    <Card title="Contactos">
+                        <Flex vertical gap="middle">
+                            {form.data.contacts.map((contact, index) => <Card size="small" key={index}
+                                                                              title={`Contacto ${index + 1}`}
+                                                                              extra={<Button type="text" danger
+                                                                                             icon={<DeleteOutlined/>}
+                                                                                             aria-label={`Remover contacto ${index + 1}`}
+                                                                                             onClick={() => form.setData('contacts', form.data.contacts.filter((_, i) => i !== index))}/>}>
+                                <Row
+                                    gutter={16}>{([['nome', 'Nome'], ['telefone', 'Telefone'], ['email', 'Email']] as const).map(([key, label]) =>
+                                    <Col xs={24} md={8} key={key}>
+                                        {nestedField(label, `contacts.${index}.${key}`, <Input
+                                            type={key === 'email' ? 'email' : key === 'telefone' ? 'tel' : 'text'}
+                                            value={contact[key]}
+                                            onChange={(event) => updateContact(index, key, event.target.value)}/>)}
+                                    </Col>)}</Row>
+                            </Card>)}
+                            <Button icon={<PlusOutlined/>}
+                                    onClick={() => form.setData('contacts', [...form.data.contacts, emptyContact()])}>Adicionar
+                                contacto</Button>
+                        </Flex>
+                    </Card>
+                    <Button type="primary" htmlType="submit" icon={<SaveOutlined/>} loading={form.processing}
+                            block={!screens.sm} style={{alignSelf: screens.sm ? 'flex-end' : undefined}}>Guardar
+                        configuração</Button>
+                </Flex>
+            </Form>
+            {convite && <Flex wrap gap="small"><Button
+                onClick={() => router.get(`/backoffice/konvitte/tables/${convite.id}`)}>Mesas</Button><Button
+                onClick={() => router.get(`/backoffice/konvitte/guests/${convite.id}`)}>Convidados</Button></Flex>}
+        </Flex>
     </>;
 }

@@ -1,5 +1,8 @@
 import {createInertiaApp} from '@inertiajs/react';
-import {ConfigProvider, theme as antdTheme} from 'antd';
+import {App as AntApp, ConfigProvider, theme as antdTheme} from 'antd';
+import ptPT from 'antd/locale/pt_PT';
+import dayjs from 'dayjs';
+import 'dayjs/locale/pt';
 import {type PropsWithChildren} from 'react';
 import {Toaster} from '@/components/ui/sonner';
 import {TooltipProvider} from '@/components/ui/tooltip';
@@ -9,15 +12,22 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import BackofficeLayout from '@/layouts/backoffice/layout';
 
+dayjs.locale('pt');
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 function AntdThemeProvider({children}: PropsWithChildren) {
     const {resolvedAppearance} = useAppearance();
 
-    return <ConfigProvider theme={{
+    return <ConfigProvider locale={ptPT} form={{
+        validateMessages: {
+            required: 'O campo ${label} é obrigatório.',
+            whitespace: 'Preencha o campo ${label}.'
+        }
+    }} theme={{
         algorithm: resolvedAppearance === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        token: {borderRadius: 10, colorPrimary: '#18181b'}
-    }}>{children}</ConfigProvider>;
+        token: {borderRadius: 8}
+    }}><AntApp>{children}</AntApp></ConfigProvider>;
 }
 
 void createInertiaApp({

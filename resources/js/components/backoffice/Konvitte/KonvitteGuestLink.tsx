@@ -1,5 +1,7 @@
-import {Check, Copy} from 'lucide-react';
+import {CheckOutlined, CopyOutlined} from '@ant-design/icons';
+import {Button, Flex, Input, Typography} from 'antd';
 import {useState} from 'react';
+import {guest as guestRoute} from '@/routes/konvitte';
 
 type Props = { invitationSlug: string; guestSlug: string };
 
@@ -7,7 +9,10 @@ export default function KonvitteGuestLink({invitationSlug, guestSlug}: Props) {
     const [copied, setCopied] = useState(false);
     const [manualLink, setManualLink] = useState('');
     const copy = async () => {
-        const path = `/konvitte/${encodeURIComponent(invitationSlug)}/convidado/${encodeURIComponent(guestSlug)}`;
+        const path = guestRoute.url({
+            slug: encodeURIComponent(invitationSlug),
+            guestSlug: encodeURIComponent(guestSlug)
+        });
         const url = new URL(path, window.location.origin).href;
         setCopied(false);
         try {
@@ -36,15 +41,14 @@ export default function KonvitteGuestLink({invitationSlug, guestSlug}: Props) {
             setManualLink(succeeded ? '' : url);
         }
     };
-    return <div className="space-y-1">
-        <button type="button"
-                className="inline-flex max-w-xs items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
-                onClick={copy} title="Copiar ligação completa do convite"
-                aria-label={`Copiar ligação do convite de ${guestSlug}`}>
-            <code className="break-all text-xs">{guestSlug}</code>{copied ?
-            <Check className="size-4 shrink-0 text-green-600"/> : <Copy className="size-4 shrink-0"/>}</button>
-        <p className="text-xs text-muted-foreground" role="status"
-           aria-live="polite">{copied ? 'Ligação copiada!' : manualLink ? 'Selecione e copie a ligação abaixo.' : 'Clique para copiar a ligação do convite'}</p>{manualLink &&
-        <input aria-label="Ligação do convite para copiar" className="field-input" readOnly value={manualLink}
-               onFocus={(event) => event.currentTarget.select()} autoFocus/>}</div>;
+    return <Flex vertical gap="small" style={{maxWidth: 280}}>
+        <Button onClick={copy} icon={copied ? <CheckOutlined/> : <CopyOutlined/>}
+                title="Copiar ligação completa do convite" aria-label={`Copiar ligação do convite de ${guestSlug}`}>
+            <Typography.Text ellipsis>{guestSlug}</Typography.Text>
+        </Button>
+        <Typography.Text type="secondary" role="status"
+                         aria-live="polite">{copied ? 'Ligação copiada!' : manualLink ? 'Selecione e copie a ligação abaixo.' : 'Clique para copiar a ligação do convite'}</Typography.Text>
+        {manualLink && <Input aria-label="Ligação do convite para copiar" readOnly value={manualLink}
+                              onFocus={(event) => event.currentTarget.select()} autoFocus/>}
+    </Flex>;
 }
