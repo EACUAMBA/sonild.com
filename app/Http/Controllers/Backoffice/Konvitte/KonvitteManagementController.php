@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Konvitte\KonvitteGuest;
 use App\Models\Konvitte\KonvitteGuestSlug;
 use App\Models\Konvitte\KonvitteInvitation;
+use App\Models\Konvitte\KonvitteTable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,9 +25,23 @@ class KonvitteManagementController extends Controller
         return back()->with('success', 'Mesa guardada com sucesso.');
     }
 
+    public function updateTable(Request $request, KonvitteInvitation $invitation, KonvitteTable $table): RedirectResponse
+    {
+        $this->ensureAccess();
+        abort_unless($table->konvitte_invitation_id === $invitation->id, 404);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120', Rule::unique('konvitte_tables', 'name')->where('konvitte_invitation_id', $invitation->id)->ignore($table->id)],
+            'capacity' => ['nullable', 'integer', 'min:1', 'max:999'],
+        ], $this->validationMessages(), ['name' => 'nome da mesa', 'capacity' => 'capacidade']);
+        $table->update(['name' => $data['name'], 'capacity' => $data['capacity'] ?? null]);
+
+        return back()->with('success', 'Mesa atualizada com sucesso.');
+    }
+
     private function validationMessages(): array
     {
         return [
+            'unique' => 'Já existe uma mesa com este nome neste convite.',
             'required' => 'O campo :attribute é obrigatório.',
             'string' => 'O campo :attribute deve ser um texto.',
             'integer' => 'O campo :attribute deve ser um número inteiro.',

@@ -58,6 +58,8 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
     const title = isGuest ? 'Convidados' : 'Mesas';
     const [showTableForm, setShowTableForm] = useState(false);
     const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+    const [editingTable, setEditingTable] = useState<Table | null>(null);
+    const tableFormRef = useRef<HTMLDivElement>(null);
     const guestFormRef = useRef<HTMLDivElement>(null);
     const form = useForm({name: '', tableId: '', tableName: '', tableCapacity: '', maxGuests: '1'});
     const tableForm = useForm({name: '', capacity: ''});
@@ -96,16 +98,32 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
             form.post(`/backoffice/konvitte/guests/${invitation.id}`, options);
         }
     };
+    const resetTableForm = () => {
+        setEditingTable(null);
+        tableForm.reset();
+        tableForm.clearErrors();
+        setShowTableForm(false);
+    };
+    const editTable = (table: Table) => {
+        tableForm.clearErrors();
+        tableForm.setData({name: table.name, capacity: table.capacity == null ? '' : String(table.capacity)});
+        setEditingTable(table);
+        tableFormRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    };
     const submitTable = () => {
         if (!invitation) return;
-        tableForm.post(`/backoffice/konvitte/tables/${invitation.id}`, {
+        const options = {
             preserveScroll: true,
             onSuccess: () => {
                 if (isGuest) form.setData('tableName', tableForm.data.name.trim());
-                tableForm.reset();
-                setShowTableForm(false);
+                resetTableForm();
             },
-        });
+        };
+        if (editingTable) {
+            tableForm.put(`/backoffice/konvitte/tables/${invitation.id}/${editingTable.id}`, options);
+        } else {
+            tableForm.post(`/backoffice/konvitte/tables/${invitation.id}`, options);
+        }
     };
     const paginate = (page: number) => router.get(`/backoffice/konvitte/guests/${invitation!.id}`, {page}, {
         preserveState: true,
@@ -139,10 +157,11 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                     mesa</Button>}
             </Flex>
             {invitation ? <>
-                {(!isGuest || showTableForm) && <Card title="Adicionar mesa">
+                {(!isGuest || showTableForm) && <div ref={tableFormRef} style={{scrollMarginTop: 88}}><Card
+                    title={editingTable ? 'Editar mesa' : 'Adicionar mesa'}>
                     <Typography.Paragraph>Convite: <Typography.Text
                         strong>{invitation.name}</Typography.Text></Typography.Paragraph>
-                    <Form layout="vertical" fields={tableFields}
+                    <Form key={editingTable?.id ?? 'new-table'} layout="vertical" fields={tableFields}
                           onValuesChange={(values) => tableForm.setData({...tableForm.data, ...Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value == null ? '' : String(value)]))})}
                           onFinish={submitTable} disabled={busy}>
                         <Row gutter={16}>
@@ -151,14 +170,17 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                                 whitespace: true
                             }]} {...fieldError(tableForm.errors.name)}><Input maxLength={120}/></Form.Item></Col>
                             <Col xs={24} md={12}><Form.Item name="capacity" label="Capacidade da mesa"
-                                                            rules={[{required: true}]}
+                                                            rules={[{required: !editingTable}]}
                                                             extra="Número de pessoas que a mesa suporta." {...fieldError(tableForm.errors.capacity)}><InputNumber
                                 min={1} max={999} precision={0} style={{width: '100%'}}/></Form.Item></Col>
                         </Row>
-                        <Button type="primary" htmlType="submit" loading={tableForm.processing} block={!screens.sm}>Adicionar
-                            mesa</Button>
+                        <Flex vertical={!screens.sm} gap="small">
+                            <Button type="primary" htmlType="submit" loading={tableForm.processing}
+                                    block={!screens.sm}>{editingTable ? 'Guardar alterações' : 'Adicionar mesa'}</Button>
+                            {editingTable && <Button disabled={busy} onClick={resetTableForm}>Cancelar edição</Button>}
+                        </Flex>
                     </Form>
-                </Card>}
+                </Card></div>}
                 {isGuest && <div ref={guestFormRef} style={{scrollMarginTop: 88}}><Card
                     title={editingGuest ? 'Editar convidado' : 'Registar convidado'}>
                     <Typography.Paragraph>Convite: <Typography.Text
@@ -248,7 +270,15 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                                   }, {
                                       title: 'Lugares previstos',
                                       dataIndex: 'allocatedSeats'
-                                  }, {title: 'Convidados registados', dataIndex: 'guestCount'}]}/>}
+                                  }, {title: 'Convidados registados', dataIndex: 'guestCount'}, {
+                                      ...tableActionsColumn,
+                                      width: 120,
+                                      render: (_, table) => <Flex vertical={!screens.lg} wrap gap="small" justify="end"
+                                                                  align="end"><Button icon={<EditOutlined/>}
+                                                                                      disabled={busy}
+                                                                                      onClick={() => editTable(table)}
+                                                                                      aria-label={`Editar mesa ${table.name}`}>Editar</Button></Flex>
+                                  }]}/>}
                     {isGuest && guests.last_page > 1 &&
                         <Flex justify="end" style={{marginTop: 16}}><Pagination current={guests.current_page}
                                                                                 total={guests.last_page * 10}
