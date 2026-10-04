@@ -4,6 +4,7 @@ use App\Http\Controllers\Backoffice\BackofficeController;
 use App\Http\Controllers\Backoffice\Eventtu\EventtuEventoController;
 use App\Http\Controllers\Backoffice\Konvitte\KonvitteInvitationController;
 use App\Http\Controllers\Backoffice\Konvitte\KonvitteManagementController;
+use App\Http\Controllers\Backoffice\Konvitte\KonvitteRsvpController;
 use App\Http\Controllers\Invitations\PublicKonvitteInvitationController;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/konvitte/tables/{invitation?}', [KonvitteManagementController::class, 'tables'])->name('konvitte.tables.index');
         Route::post('/konvitte/tables/{invitation}', [KonvitteManagementController::class, 'storeTable'])->name('konvitte.tables.store');
         Route::put('/konvitte/tables/{invitation}/{table}', [KonvitteManagementController::class, 'updateTable'])->name('konvitte.tables.update');
+        Route::get('/konvitte/rsvps/{invitation?}', [KonvitteRsvpController::class, 'index'])->name('konvitte.rsvps.index');
         Route::get('/konvitte/guests/{invitation?}', [KonvitteManagementController::class, 'guests'])->name('konvitte.guests.index');
         Route::post('/konvitte/guests/{invitation}', [KonvitteManagementController::class, 'storeGuest'])->name('konvitte.guests.store');
         Route::put('/konvitte/guests/{invitation}/{guest}', [KonvitteManagementController::class, 'updateGuest'])->name('konvitte.guests.update');

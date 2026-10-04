@@ -242,3 +242,46 @@ it('rejects table filters outside the invitation and malformed filters', functio
     $this->get("$url?table=invalid")->assertStatus(400);
     $this->get("$url?table[]=1")->assertStatus(400);
 });
+
+it('lists RSVPs with accurate invitation summaries and private messages', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $other = konvitteManagedInvitation();
+    $table = $invitation->tables()->create(['name' => 'Família']);
+    foreach (['CONFIRMED', 'DECLINED', 'PENDING', null] as $index => $status) {
+        $guest = $invitation->guests()->create(['name' => "Pessoa $index", 'max_guests' => 3, 'konvitte_table_id' => $table->id]);
+        if ($status) $guest->rsvp()->create(['status' => $status, 'message' => "Mensagem $index"]);
+    }
+    $other->guests()->create(['name' => 'Outro convite', 'max_guests' => 1])->rsvp()->create(['status' => 'CONFIRMED', 'message' => 'Privada']);
+    $this->get("/backoffice/konvitte/rsvps/{$invitation->id}")->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->component('backoffice/Konvitte/KonvitteRsvps')->where('invitation.id', $invitation->id)
+        ->where('summary', ['total' => 4, 'confirmed' => 1, 'declined' => 1, 'pending' => 1, 'unanswered' => 1])
+        ->where('responses.total', 4)->where('responses.data.0.message', 'Mensagem 0')->where('responses.data.0.table', 'Família')
+        ->where('responses.data.3.status', 'UNANSWERED')->where('responses.data.3.respondedAt', null));
+    $this->get('/backoffice/konvitte/rsvps')->assertOk()->assertInertia(fn(Assert $page) => $page->where('invitation.id', $other->id)->where('responses.total', 1));
+});
+
+it('filters and paginates RSVPs without changing summary counts', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    for ($i = 1; $i <= 12; $i++) {
+        $invitation->guests()->create(['name' => "Ana $i", 'max_guests' => 1])->rsvp()->create(['status' => 'CONFIRMED']);
+    }
+    $invitation->guests()->create(['name' => 'Sem resposta', 'max_guests' => 1]);
+    $invitation->guests()->create(['name' => 'Indeciso', 'max_guests' => 1])->rsvp()->create(['status' => 'PENDING']);
+    $url = "/backoffice/konvitte/rsvps/{$invitation->id}";
+    $this->get("$url?status=CONFIRMED&search=Ana&page=2")->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->where('filters.status', 'CONFIRMED')->where('filters.search', 'Ana')->where('responses.total', 12)->has('responses.data', 2)
+        ->where('summary.total', 14)->where('summary.pending', 1)->where('summary.unanswered', 1));
+    $this->get("$url?status=UNANSWERED")->assertInertia(fn(Assert $page) => $page->where('responses.total', 1)->where('responses.data.0.name', 'Sem resposta'));
+    $this->get("$url?status=PENDING")->assertInertia(fn(Assert $page) => $page->where('responses.total', 1)->where('responses.data.0.name', 'Indeciso'));
+    $this->get("$url?search=Inexistente")->assertInertia(fn(Assert $page) => $page->where('responses.total', 0));
+    $this->get("$url?status=INVALID")->assertStatus(400);
+    $this->get("$url?search[]=invalid")->assertStatus(400);
+});
+
+it('handles an empty RSVP screen and requires management access', function () {
+    $this->actingAs(konvitteAdmin())->get('/backoffice/konvitte/rsvps')->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->where('invitation', null)->where('summary.total', 0)->has('responses.data', 0));
+    $this->actingAs(User::factory()->create())->get('/backoffice/konvitte/rsvps')->assertForbidden();
+});
