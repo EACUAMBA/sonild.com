@@ -1,16 +1,38 @@
+import PublicMessages, {type GuestMessage} from '@/components/invitations/PublicMessages';
 import InvitationGallery from '@/components/invitations/InvitationGallery';
+import InvitationMusicPlayer from '@/components/invitations/InvitationMusicPlayer';
 import PublicRsvp, {type RsvpResponse} from '@/components/invitations/PublicRsvp';
 import {Head} from '@inertiajs/react';
-import {CalendarDays, ChevronRight, Gift, Heart, MailOpen, MessageCircle, Send, Sparkles} from 'lucide-react';
+import {
+    Armchair,
+    CalendarDays,
+    ChevronRight,
+    CircleAlert,
+    Gift,
+    Heart,
+    MailOpen,
+    MessageCircle,
+    Send,
+    Sparkles,
+    Users
+} from 'lucide-react';
 import {type FormEvent, useEffect, useMemo, useRef, useState} from 'react';
 import '../../css/invitation.css';
 
 type InvitationData = {
+    notExtendedToChildren?: boolean;
+    messagesUrl?: string | null;
+    messages?: GuestMessage[];
     rsvpEnabled?: boolean; rsvpUrl?: string | null; rsvp?: RsvpResponse | null;
     groom: string; bride: string; guest: string; date: string; dateLabel: string; dayLabel: string;
     bible: string | null; bibleReference: string | null; table: string; invitationType: string;
     guestLimit: string; children: string; parents: { groom: string; bride: string }; venue: string; address: string;
-    coverImage?: string | null; heroImage?: string | null; informationImage?: string | null; music?: string | null;
+    coverImage?: string | null;
+    heroImage?: string | null;
+    informationImage?: string | null;
+    music?: string | null;
+    musicTitle?: string | null;
+    musicArtist?: string | null;
     coupleText?: string | null; celebrationText?: string | null; instructions?: string | null;
     contacts?: { name: string; phone: string | null; email: string | null }[];
     program?: { time: string; title: string; description: string; mapUrl?: string | null }[];
@@ -135,6 +157,16 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
     const dayNumber = eventDate.toLocaleDateString('pt-PT', {...dateOptions, day: 'numeric'});
     const yearLabel = eventDate.toLocaleDateString('pt-PT', {...dateOptions, year: 'numeric'});
     const [opened, setOpened] = useState(false);
+    const musicRef = useRef<HTMLAudioElement>(null);
+    const openInvitation = () => {
+        if (musicRef.current) void musicRef.current.play().catch(() => {
+        });
+        setOpened(true);
+    };
+    const closeInvitation = () => {
+        musicRef.current?.pause();
+        setOpened(false);
+    };
     const [rsvp, setRsvp] = useState('CONFIRMED');
     const [rsvpMessage, setRsvpMessage] = useState('');
     const [messages, setMessages] = useState(invitationData ? [] : initialMessages);
@@ -158,7 +190,11 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
     return <><Head title={`${invitation.groom} & ${invitation.bride} — Convite de casamento`}>
         <meta name="description" content={`Convite de casamento de ${invitation.groom} e ${invitation.bride}.`}/>
     </Head>
-        <main className="invitation" lang="pt">{!opened ?
+        <main className={`invitation${opened && invitation.music ? ' invitation-with-music' : ''}`} lang="pt">
+            {invitation.music && <InvitationMusicPlayer key={invitation.music} src={invitation.music}
+                                                        title={invitation.musicTitle} artist={invitation.musicArtist}
+                                                        visible={opened} audioRef={musicRef}/>}
+            {!opened ?
             <section className="invitation-stage invitation-cover-stage" aria-label="Abertura do convite"
                      style={invitation.coverImage ? {backgroundImage: `linear-gradient(180deg, #1e2a1d66, #1e2a1dcc), url(${JSON.stringify(invitation.coverImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, #7c8a66, #263d2c)'} : undefined}>
                 <div className="invitation-frame" aria-hidden="true"/>
@@ -174,7 +210,7 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                         className="bible-quote">{invitation.bible}<small>{invitation.bibleReference}</small></p><p
                         className="invitation-label">Cordialmente convidam</p><h2
                         className="guest-name">{invitation.guest}</h2>
-                    <button className="open-invitation" onClick={() => setOpened(true)}><MailOpen
+                    <button className="open-invitation" onClick={openInvitation}><MailOpen
                         size={17}/> Abrir <ChevronRight size={17}/></button>
                 </div>
             </section> : <div ref={contentRef} className="invitation-page">
@@ -217,11 +253,17 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                     <p className="guest-greeting">Querido(a) <strong>{invitation.guest}</strong>,</p><p>Este dia será
                         ainda mais especial com a sua presença.</p>
                     <div className="guest-card">
-                        <div><span>Convite</span><strong>{invitation.invitationType}</strong></div>
-                        <div><span>Mesa</span><strong>{invitation.table}</strong></div>
-                        <div><span>Lotação</span><strong>{invitation.guestLimit}</strong></div>
-                        <div><span>Família</span><strong>{invitation.children}</strong></div>
+                        <div><Armchair size={23} strokeWidth={1.4}
+                                       aria-hidden="true"/><span>Mesa</span><strong>{invitation.table}</strong></div>
+                        <div><Users size={23} strokeWidth={1.4}
+                                    aria-hidden="true"/><span>Lotação</span><strong>{invitation.guestLimit}</strong>
+                        </div>
                     </div>
+                    {invitation.notExtendedToChildren && <div className="guest-children-alert" role="note">
+                        <CircleAlert size={23} aria-hidden="true"/>
+                        <div><strong>Convite não extensivo a crianças</strong>
+                            <p>Agradecemos a sua compreensão.</p></div>
+                    </div>}
                 </section>
                 <section className="invitation-section date-section"><SectionHeading eyebrow="Marque na agenda"
                                                                                      title="A nossa data"
@@ -251,6 +293,9 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                 {invitationData?.rsvpEnabled &&
                     <PublicRsvp key={invitationData.rsvpUrl ?? 'general'} guest={invitation.guest}
                                 url={invitationData.rsvpUrl ?? null} response={invitationData.rsvp ?? null}/>}
+                    {invitationData && <PublicMessages key={invitationData.messagesUrl ?? 'general'}
+                                                       url={invitationData.messagesUrl ?? null}
+                                                       messages={invitationData.messages ?? []}/>}
                 {!invitationData && <>
                     <section className="invitation-section rsvp-section"><SectionHeading eyebrow="A sua presença"
                                                                                      title="Confirme connosco"
@@ -316,14 +361,11 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                         <p key={index}><strong>{contact.name}</strong><br/>{contact.phone &&
                             <span>{contact.phone}</span>} {contact.email &&
                             <a href={`mailto:${contact.email}`}>{contact.email}</a>}</p>)}</section>}
-                {invitation.music && <section className="invitation-section">
-                    <audio controls src={invitation.music} preload="none" aria-label="Música do convite"/>
-                </section>}
                 <footer className="invitation-footer invitation-footer-full"><Heart size={17}/><p>Com
                     amor,<br/><strong>{invitation.groom} &amp; {invitation.bride}</strong></p>
                     <div className="eventtu-note"><span>Um convite especial por</span><strong>Sonild
                         Eventtu</strong><small>Convites digitais para momentos inesquecíveis</small></div>
-                    <button className="back-to-cover" onClick={() => setOpened(false)}>Voltar à capa</button>
+                    <button className="back-to-cover" onClick={closeInvitation}>Voltar à capa</button>
                 </footer>
             </div>}</main>
     </>;

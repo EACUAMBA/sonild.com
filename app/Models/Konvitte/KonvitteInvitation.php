@@ -39,6 +39,11 @@ class KonvitteInvitation extends Model
         return $this->hasMany(KonvitteTable::class)->orderBy('name');
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(KonvitteMessage::class);
+    }
+
     public function guests(): HasMany
     {
         return $this->hasMany(KonvitteGuest::class)->latest();

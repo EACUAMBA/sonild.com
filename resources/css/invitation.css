@@ -355,25 +355,58 @@
     font-size: 25px
 }
 
+.guest-section .section-icon {
+    margin-inline: auto;
+}
+
 .guest-card {
     display: grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap: 1px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    width: min(100%, 580px);
     margin: 36px auto 0;
-    background: #d8cc9c77;
-    border: 1px solid #d8cc9c77
 }
 
 .guest-card > div {
-    display: grid;
-    gap: 9px;
-    padding: 20px 10px;
-    background: #56664d
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 28px 20px;
+    border: 1px solid #d8cc9c66;
+    border-radius: 18px;
+    background: linear-gradient(145deg, #fffaf00d, #fffaf003);
+}
+
+.guest-card > div > svg {
+    color: #e4d7ad;
+    margin-bottom: 4px;
+}
+
+.guest-card span {
+    color: #e4d7ad;
+    font-size: 10px;
+    letter-spacing: 2.5px;
 }
 
 .guest-card strong {
-    font-size: 18px;
-    font-weight: 500
+    font-size: clamp(20px, 3vw, 24px);
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 400px) {
+    .guest-section .guest-card {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .guest-card > div {
+        padding: 22px 18px;
+    }
 }
 
 .date-section {
@@ -1152,4 +1185,134 @@
         justify-content: center;
         width: 100%;
     }
+}
+
+.invitation-with-music {
+    padding-bottom: 96px;
+}
+
+.invitation-music-player {
+    position: fixed;
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(340px, calc(100vw - 32px));
+    padding: 12px 14px;
+    border: 1px solid #c8bd9b;
+    border-radius: 48px;
+    background: #fffaf0f5;
+    color: var(--ink);
+    box-shadow: 0 8px 32px #263d2c26;
+    backdrop-filter: blur(12px);
+    text-align: left;
+}
+
+.invitation-music-disc {
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid #c8bd9b;
+    background: #e8ebdf;
+    color: var(--olive);
+}
+
+.invitation-music-disc.is-playing {
+    animation: invitation-music-turn 12s linear infinite;
+}
+
+.invitation-music-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.invitation-music-info strong, .invitation-music-info span {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.invitation-music-info strong {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.invitation-music-info span {
+    font-size: 15px;
+    color: #66715d;
+}
+
+.invitation-music-info small {
+    font-size: 13px;
+    color: #9a453c;
+}
+
+.invitation-music-player button {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--olive);
+    color: var(--cream);
+    cursor: pointer;
+}
+
+.invitation-music-player button:focus-visible {
+    outline: 2px solid var(--olive);
+    outline-offset: 4px;
+}
+
+@keyframes invitation-music-turn {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 480px) {
+    .invitation-music-player {
+        right: 16px;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        gap: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .invitation-music-disc.is-playing {
+        animation: none;
+    }
+}
+
+.guest-children-alert {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: min(100%, 580px);
+    margin: 22px auto 0;
+    padding: 18px 22px;
+    border: 1px solid #e4d7ad;
+    border-radius: 14px;
+    background: #fff4d9;
+    color: #594923;
+    text-align: left;
+}
+
+.guest-children-alert > svg {
+    flex-shrink: 0;
+}
+
+.guest-children-alert strong {
+    font-size: 20px;
+    line-height: 1.3;
+}
+
+.guest-section .guest-children-alert p {
+    margin: 5px 0 0;
+    font-size: 16px;
 }

@@ -12,6 +12,20 @@ use Inertia\Response;
 
 class PublicKonvitteInvitationController extends Controller
 {
+    public function storeMessage(Request $request, string $slug, string $guestSlug): RedirectResponse
+    {
+        $invitation = KonvitteInvitationSlug::where('slug', $slug)->firstOrFail()->invitation;
+        $guest = $invitation->guests()->whereHas('slug', fn($query) => $query->where('slug', $guestSlug))->firstOrFail();
+        $data = $request->validate(['text' => ['required', 'string', 'max:5000']], [
+            'text.required' => 'Escreva uma mensagem.',
+            'text.string' => 'A mensagem deve ser um texto.',
+            'text.max' => 'A mensagem deve ter no máximo 5000 caracteres.',
+        ]);
+        $invitation->messages()->create(['konvitte_guest_id' => $guest->id, 'text' => $data['text']]);
+
+        return to_route('konvitte.guest', ['slug' => $slug, 'guestSlug' => $guestSlug])->with('success', 'Mensagem enviada aos noivos.');
+    }
+
     public function storeRsvp(Request $request, string $slug, string $guestSlug): RedirectResponse
     {
         $invitation = KonvitteInvitationSlug::where('slug', $slug)->firstOrFail()->invitation;
@@ -40,6 +54,10 @@ class PublicKonvitteInvitationController extends Controller
 
         return Inertia::render('welcome', [
             'invitationData' => [
+                'messagesUrl' => $guest ? route('konvitte.messages.store', ['slug' => $slug, 'guestSlug' => $guestSlug], false) : null,
+                'messages' => $guest ? $invitation->messages()->where('konvitte_guest_id', $guest->id)->latest('id')->get()->map(fn($message) => [
+                    'id' => $message->id, 'text' => $message->text, 'sentAt' => $message->created_at->toIso8601String(),
+                ])->values() : [],
                 'rsvpEnabled' => $invitation->rsvp_enabled,
                 'rsvpUrl' => $guest && $invitation->rsvp_enabled ? route('konvitte.rsvp.store', ['slug' => $slug, 'guestSlug' => $guestSlug], false) : null,
                 'rsvp' => $guest?->rsvp ? ['status' => $guest->rsvp->status, 'message' => $guest->rsvp->message] : null,
@@ -54,6 +72,7 @@ class PublicKonvitteInvitationController extends Controller
                 'table' => $guest?->table?->name ?? 'A definir',
                 'invitationType' => $invitation->inviteType?->name ?? 'Convite de casamento',
                 'guestLimit' => $guest ? 'Válido para ' . $guest->max_guests . ' pessoa(s)' : 'Consulte o seu convite',
+                'notExtendedToChildren' => $guest?->not_extended_to_children ?? false,
                 'children' => 'Conforme indicação do convite',
                 'parents' => [
                     'groom' => implode(' e ', array_filter([$invitation->groom_father_name, $invitation->groom_mother_name])),

@@ -44,7 +44,7 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
             key: 'konvitte',
             label: 'Konvitte',
             icon: <HeartOutlined/>,
-            children: [navLink('Convites', '/backoffice/konvitte/invitations'), navLink('Mesas', '/backoffice/konvitte/tables'), navLink('Convidados', '/backoffice/konvitte/guests'), navLink('RSVPs', '/backoffice/konvitte/rsvps')]
+            children: [navLink('Convites', '/backoffice/konvitte/invitations'), navLink('Mesas', '/backoffice/konvitte/tables'), navLink('Convidados', '/backoffice/konvitte/guests'), navLink('RSVPs', '/backoffice/konvitte/rsvps'), navLink('Mensagens', '/backoffice/konvitte/messages')]
         },
         {
             key: 'settings',
@@ -58,7 +58,7 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
             }]
         },
     ];
-    const routes = ['/backoffice/konvitte/rsvps', '/backoffice/konvitte/invitations', '/backoffice/konvitte/tables', '/backoffice/konvitte/guests', '/backoffice/eventtu/eventos', '/backoffice/eventtu/event-types', '/backoffice/users', '/backoffice/groups', '/backoffice/permissions'];
+    const routes = ['/backoffice/konvitte/messages', '/backoffice/konvitte/rsvps', '/backoffice/konvitte/invitations', '/backoffice/konvitte/tables', '/backoffice/konvitte/guests', '/backoffice/eventtu/eventos', '/backoffice/eventtu/event-types', '/backoffice/users', '/backoffice/groups', '/backoffice/permissions'];
     const selected = routes.find((path) => currentPath === path || currentPath.startsWith(`${path}/`)) ?? '/backoffice';
     const openKeys = currentPath.includes('/konvitte/') ? ['konvitte'] : currentPath.includes('/eventtu/') ? ['eventtu'] : selected !== '/backoffice' ? ['settings', 'access'] : [];
     const navigation = <Flex vertical gap="large" style={{height: '100%'}}>

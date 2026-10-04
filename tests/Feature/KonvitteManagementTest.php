@@ -299,3 +299,26 @@ it('saves and exposes the invitation RSVP activation setting', function () {
     $this->post($url, $payload + ['rsvpEnabled' => '0'])->assertSessionHasNoErrors();
     expect($invitation->fresh()->rsvp_enabled)->toBeFalse();
 });
+
+
+it('defaults to no children and saves the guest choice for the public invitation', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $invitation->slug()->create(['slug' => 'children-policy']);
+    $url = '/backoffice/konvitte/guests/' . $invitation->id;
+    $this->post($url, ['name' => 'Maria', 'maxGuests' => 2])->assertSessionHasNoErrors();
+    $guest = $invitation->guests()->firstOrFail();
+    expect($guest->not_extended_to_children)->toBeTrue();
+    $publicUrl = '/konvitte/children-policy/' . $guest->slug->slug;
+    $this->get($publicUrl)->assertOk()->assertInertia(fn($page) => $page->where('invitationData.notExtendedToChildren', true));
+    $this->put($url . '/' . $guest->id, ['name' => 'Maria', 'maxGuests' => 2, 'notExtendedToChildren' => '0'])->assertSessionHasNoErrors();
+    expect($guest->fresh()->not_extended_to_children)->toBeFalse();
+    $this->get($publicUrl)->assertInertia(fn($page) => $page->where('invitationData.notExtendedToChildren', false));
+    $this->get($url)->assertInertia(fn($page) => $page->where('guests.data.0.notExtendedToChildren', false));
+    $this->put($url . '/' . $guest->id, ['name' => 'Maria', 'maxGuests' => 3])->assertSessionHasNoErrors();
+    expect($guest->fresh()->not_extended_to_children)->toBeFalse();
+    $this->put($url . '/' . $guest->id, ['name' => 'Maria', 'maxGuests' => 2, 'notExtendedToChildren' => 'invalid'])->assertSessionHasErrors('notExtendedToChildren');
+    $this->put($url . '/' . $guest->id, ['name' => 'Maria', 'maxGuests' => 2, 'notExtendedToChildren' => '1'])->assertSessionHasNoErrors();
+    $this->get($publicUrl)->assertInertia(fn($page) => $page->where('invitationData.notExtendedToChildren', true));
+    $this->get('/konvitte/children-policy')->assertInertia(fn($page) => $page->where('invitationData.notExtendedToChildren', false));
+});

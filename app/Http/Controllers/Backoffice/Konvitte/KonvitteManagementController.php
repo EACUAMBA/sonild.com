@@ -44,6 +44,7 @@ class KonvitteManagementController extends Controller
             'unique' => 'Já existe uma mesa com este nome neste convite.',
             'required' => 'O campo :attribute é obrigatório.',
             'string' => 'O campo :attribute deve ser um texto.',
+            'boolean' => 'Selecione uma opção válida para crianças.',
             'integer' => 'O campo :attribute deve ser um número inteiro.',
             'min.numeric' => 'O campo :attribute deve ser pelo menos :min.',
             'max.numeric' => 'O campo :attribute não pode ultrapassar :max.',
@@ -86,7 +87,7 @@ class KonvitteManagementController extends Controller
                 ->when($tableFilter === 'none', fn($query) => $query->whereNull('konvitte_table_id'))
                 ->when($tableFilter !== null && $tableFilter !== 'none', fn($query) => $query->where('konvitte_table_id', $tableFilter))
                 ->orderBy('id')->paginate(10)->withQueryString()->through(fn($guest) => [
-                'id' => $guest->id, 'name' => $guest->name, 'table' => $guest->table?->name, 'tableId' => $guest->konvitte_table_id, 'maxGuests' => $guest->max_guests, 'slug' => $guest->slug?->slug,
+                    'id' => $guest->id, 'name' => $guest->name, 'table' => $guest->table?->name, 'tableId' => $guest->konvitte_table_id, 'maxGuests' => $guest->max_guests, 'notExtendedToChildren' => $guest->not_extended_to_children, 'slug' => $guest->slug?->slug,
                 ]) : ['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0],
         ]);
     }
@@ -117,6 +118,7 @@ class KonvitteManagementController extends Controller
             'tableId' => ['nullable', 'integer', Rule::exists('konvitte_tables', 'id')->where('konvitte_invitation_id', $invitation->id)],
             'tableName' => ['nullable', 'string', 'max:120', 'prohibits:tableId'],
             'tableCapacity' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'notExtendedToChildren' => ['sometimes', 'boolean'],
             'maxGuests' => ['required', 'integer', 'min:1', 'max:999'],
         ], $this->validationMessages(), ['name' => 'nome do convidado', 'tableId' => 'mesa', 'tableName' => 'nome da mesa', 'tableCapacity' => 'capacidade da mesa', 'maxGuests' => 'número máximo de convidados']);
         DB::transaction(function () use ($data, $invitation, $guest): void {
@@ -129,6 +131,7 @@ class KonvitteManagementController extends Controller
                 $tableId = $table->id;
             }
             $attributes = ['name' => $data['name'], 'konvitte_table_id' => $tableId, 'max_guests' => $data['maxGuests']];
+            $attributes['not_extended_to_children'] = $data['notExtendedToChildren'] ?? $guest?->not_extended_to_children ?? true;
             if ($guest) {
                 $guest->update($attributes);
                 return;

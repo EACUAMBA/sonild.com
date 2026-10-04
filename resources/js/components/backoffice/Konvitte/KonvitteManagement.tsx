@@ -29,6 +29,7 @@ type Guest = {
     table: string | null;
     tableId: number | null;
     maxGuests: number;
+    notExtendedToChildren: boolean;
     slug: string | null
 };
 type Invitation = { id: number; name: string; slug: string | null };
@@ -63,7 +64,14 @@ function ManagementForm({invitation, invitations, tables, guests, filters, secti
     const [editingTable, setEditingTable] = useState<Table | null>(null);
     const tableFormRef = useRef<HTMLDivElement>(null);
     const guestFormRef = useRef<HTMLDivElement>(null);
-    const form = useForm({name: '', tableId: '', tableName: '', tableCapacity: '', maxGuests: '1'});
+    const form = useForm({
+        name: '',
+        tableId: '',
+        tableName: '',
+        tableCapacity: '',
+        maxGuests: '1',
+        notExtendedToChildren: '1'
+    });
     const tableForm = useForm({name: '', capacity: ''});
     const selectedTable = tables.find((table) => table.name.toLocaleLowerCase() === form.data.tableName.trim().toLocaleLowerCase());
     const isNewTable = Boolean(form.data.tableName.trim()) && !selectedTable;
@@ -80,7 +88,8 @@ function ManagementForm({invitation, invitations, tables, guests, filters, secti
             tableId: guest.tableId ? String(guest.tableId) : '',
             tableName: guest.table ?? '',
             tableCapacity: '',
-            maxGuests: String(guest.maxGuests)
+            maxGuests: String(guest.maxGuests),
+            notExtendedToChildren: guest.notExtendedToChildren ? '1' : '0'
         });
         setEditingGuest(guest);
         guestFormRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -214,6 +223,14 @@ function ManagementForm({invitation, invitations, tables, guests, filters, secti
                                                                    rules={[{required: true}]}
                                                                    extra="Inclui o convidado e os acompanhantes." {...fieldError(form.errors.maxGuests)}><InputNumber
                                 min={1} max={999} precision={0} style={{width: '100%'}}/></Form.Item></Col>
+                            <Col xs={24} md={12} lg={8}><Form.Item name="notExtendedToChildren"
+                                                                   label="Convite extensivo a crianças"
+                                                                   {...fieldError(form.errors.notExtendedToChildren)}>
+                                <Select options={[
+                                    {value: '1', label: 'Não extensivo a crianças'},
+                                    {value: '0', label: 'Extensivo a crianças'},
+                                ]}/>
+                            </Form.Item></Col>
                             {isNewTable && <Col xs={24} md={12} lg={8}><Form.Item name="tableCapacity"
                                                                                   label="Capacidade da nova mesa"
                                                                                   rules={[{required: true}]} {...fieldError(form.errors.tableCapacity)}><InputNumber
