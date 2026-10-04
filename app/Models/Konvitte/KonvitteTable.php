@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['konvitte_invitation_id', 'name'])]
+#[Fillable(['konvitte_invitation_id', 'name', 'capacity'])]
 class KonvitteTable extends Model
 {
 

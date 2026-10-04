@@ -115,13 +115,13 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
     } : item));
     const fieldError = (key: keyof FormData) => form.errors[key] ?
         <p className="text-xs text-destructive">{form.errors[key]}</p> : null;
-    return <><Head title="Konvitte Invitation"/>
+    return <><Head title="Convite"/>
         <div className="mx-auto max-w-6xl space-y-6"><Link className="secondary-button"
-                                                           href="/backoffice/konvitte/invitations">Back to
-            invitations</Link>
+                                                           href="/backoffice/konvitte/invitations">Voltar aos
+            convites</Link>
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div><p className="text-sm text-muted-foreground">Konvitte</p><h1
-                    className="mt-1 text-3xl font-semibold tracking-tight">Konvitte Invitation</h1><p
+                    className="mt-1 text-3xl font-semibold tracking-tight">Convite</h1><p
                     className="mt-2 text-muted-foreground">Configure o conteúdo do convite de casamento num único
                     formulário.</p></div>
                 <button className="action-button sm:w-auto" disabled={form.processing} onClick={submit}><Save
@@ -320,9 +320,8 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
                 </div>
             </form>
             {convite && <nav className="flex gap-4"><Link className="secondary-button"
-                                                          href={`/backoffice/konvitte/tables/${convite.id}`}>Konvitte
-                Tables</Link><Link className="secondary-button" href={`/backoffice/konvitte/guests/${convite.id}`}>Konvitte
-                Guests</Link></nav>}
+                                                          href={`/backoffice/konvitte/tables/${convite.id}`}>Mesas</Link><Link
+                className="secondary-button" href={`/backoffice/konvitte/guests/${convite.id}`}>Convidados</Link></nav>}
 
         </div>
     </>;

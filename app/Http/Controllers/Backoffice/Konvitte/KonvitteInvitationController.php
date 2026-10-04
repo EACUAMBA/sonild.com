@@ -40,7 +40,7 @@ class KonvitteInvitationController extends Controller
     {
         $this->ensureAccess();
         DB::transaction(fn() => $invitation->delete());
-        return to_route('backoffice.konvitte.invitations.index')->with('success', 'Invitation deleted.');
+        return to_route('backoffice.konvitte.invitations.index')->with('success', 'Convite eliminado.');
     }
 
     public function edit(?KonvitteInvitation $invitation = null): Response

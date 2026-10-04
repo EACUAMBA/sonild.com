@@ -111,3 +111,33 @@ it('defaults tables and guests to the latest invitation and honours explicit sel
     expect($older->tables()->count())->toBe(1)->and($older->guests()->count())->toBe(1);
     expect($latest->tables()->count())->toBe(0)->and($latest->guests()->count())->toBe(0);
 });
+
+
+it('creates a table with capacity while registering a guest and reuses it', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $other = konvitteManagedInvitation();
+    $other->tables()->create(['name' => 'Família', 'capacity' => 20]);
+    $payload = ['name' => 'Ana', 'tableName' => 'Família', 'tableCapacity' => 8, 'maxGuests' => 3];
+    $this->post("/backoffice/konvitte/guests/{$invitation->id}", $payload)->assertSessionHasNoErrors();
+    $table = $invitation->tables()->firstOrFail();
+    expect($table->capacity)->toBe(8);
+    expect($invitation->guests()->firstOrFail()->konvitte_table_id)->toBe($table->id);
+    $this->post("/backoffice/konvitte/guests/{$invitation->id}", array_replace($payload, ['name' => 'Luís', 'tableCapacity' => 10, 'maxGuests' => 2]))->assertSessionHasNoErrors();
+    expect($invitation->tables()->count())->toBe(1)->and($table->fresh()->capacity)->toBe(8);
+    $this->get("/backoffice/konvitte/guests/{$invitation->id}")->assertInertia(fn(Assert $page) => $page
+        ->where('tables.0.capacity', 8)->where('tables.0.allocatedSeats', 5)->where('tables.0.guestCount', 2));
+});
+
+it('creates only a table and validates capacity before creating records', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $this->post("/backoffice/konvitte/tables/{$invitation->id}", ['name' => 'Amigos', 'capacity' => 6])->assertSessionHasNoErrors();
+    expect($invitation->tables()->firstOrFail()->capacity)->toBe(6)->and($invitation->guests()->count())->toBe(0);
+    foreach ([0, -1, 1000, 'invalid'] as $capacity) {
+        $this->post("/backoffice/konvitte/tables/{$invitation->id}", ['name' => 'Inválida', 'capacity' => $capacity])->assertSessionHasErrors('capacity');
+        $this->post("/backoffice/konvitte/guests/{$invitation->id}", ['name' => 'Ana', 'tableName' => 'Inválida', 'tableCapacity' => $capacity, 'maxGuests' => 1])->assertSessionHasErrors('tableCapacity');
+    }
+    $this->post("/backoffice/konvitte/guests/{$invitation->id}", ['name' => 'Ana', 'tableName' => 'Não criar', 'tableCapacity' => 6, 'maxGuests' => 0])->assertSessionHasErrors('maxGuests');
+    expect($invitation->tables()->count())->toBe(1)->and($invitation->guests()->count())->toBe(0);
+});

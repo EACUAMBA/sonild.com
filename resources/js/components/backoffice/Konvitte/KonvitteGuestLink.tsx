@@ -39,11 +39,12 @@ export default function KonvitteGuestLink({invitationSlug, guestSlug}: Props) {
     return <div className="space-y-1">
         <button type="button"
                 className="inline-flex max-w-xs items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2"
-                onClick={copy} title="Copy full invitation link" aria-label={`Copy invitation link for ${guestSlug}`}>
+                onClick={copy} title="Copiar ligação completa do convite"
+                aria-label={`Copiar ligação do convite de ${guestSlug}`}>
             <code className="break-all text-xs">{guestSlug}</code>{copied ?
             <Check className="size-4 shrink-0 text-green-600"/> : <Copy className="size-4 shrink-0"/>}</button>
         <p className="text-xs text-muted-foreground" role="status"
-           aria-live="polite">{copied ? 'Link copied!' : manualLink ? 'Select and copy the link below.' : 'Click to copy the invitation link'}</p>{manualLink &&
-        <input aria-label="Invitation link to copy" className="field-input" readOnly value={manualLink}
+           aria-live="polite">{copied ? 'Ligação copiada!' : manualLink ? 'Selecione e copie a ligação abaixo.' : 'Clique para copiar a ligação do convite'}</p>{manualLink &&
+        <input aria-label="Ligação do convite para copiar" className="field-input" readOnly value={manualLink}
                onFocus={(event) => event.currentTarget.select()} autoFocus/>}</div>;
 }
