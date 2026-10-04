@@ -833,3 +833,246 @@
         transition: none !important
     }
 }
+
+/* Public RSVP follows the invitation's paper, olive and gold palette. */
+.public-rsvp-shortcut {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    padding: 20px 24px;
+    background: #ede8d9;
+    border-bottom: 1px solid #d8ceb4;
+    font-size: 18px;
+}
+
+.public-rsvp-shortcut a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--olive);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+.public-rsvp {
+    scroll-margin-top: 24px;
+    background: radial-gradient(ellipse at top, #fffdf7, #eee8d8) !important;
+    border-block: 1px solid #d8ceb4;
+}
+
+.public-rsvp-seal {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border: 1px solid #b9ad87;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    color: var(--olive);
+    box-shadow: 0 0 0 6px #a89d7812;
+}
+
+.public-rsvp h2, .public-rsvp-dialog h2 {
+    font: 500 clamp(34px, 6vw, 48px)/1.12 'Cormorant Garamond', Georgia, serif;
+    color: var(--ink);
+    text-align: center;
+    margin: 12px 0 18px;
+}
+
+.public-rsvp-intro {
+    max-width: 520px;
+    margin: 0 auto 26px;
+    font-size: 20px;
+    line-height: 1.55;
+    text-align: center;
+}
+
+.public-rsvp-note {
+    margin: 18px auto 0;
+    font-size: 17px;
+    color: #66715d;
+}
+
+.public-rsvp-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    color: var(--olive);
+    font-size: 18px;
+}
+
+.public-rsvp-dialog {
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 36px;
+    margin: auto;
+    border: 1px solid #b9ad87;
+    border-radius: 18px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    box-shadow: 0 24px 90px #17251955;
+    text-align: left;
+}
+
+.public-rsvp-dialog::backdrop {
+    background: #1f2b22a6;
+    backdrop-filter: blur(5px);
+}
+
+.public-rsvp-dialog .invitation-eyebrow {
+    justify-content: center;
+}
+
+.public-rsvp-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    color: var(--olive);
+    background: transparent;
+    cursor: pointer;
+}
+
+.public-rsvp-close:hover {
+    background: #56664d12;
+}
+
+.public-rsvp-form {
+    display: grid;
+    gap: 12px;
+}
+
+.public-rsvp-form fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 8px;
+    min-width: 0;
+}
+
+.public-rsvp-form legend, .public-rsvp-message {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.public-rsvp-message span {
+    font-weight: 400;
+    color: #66715d;
+}
+
+.public-rsvp-choice {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+    padding: 14px 16px;
+    border: 1px solid #d8ceb4;
+    border-radius: 10px;
+    background: #fffdf8;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+.public-rsvp-choice:has(input:checked) {
+    border-color: var(--olive);
+    background: #eaf0e4;
+}
+
+.public-rsvp-choice input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    accent-color: var(--olive);
+}
+
+.public-rsvp-choice strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.public-rsvp-choice small {
+    display: block;
+    margin-top: 3px;
+    font-size: 16px;
+    color: #66715d;
+}
+
+.public-rsvp-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    border: 1px solid #d8ceb4;
+    border-radius: 10px;
+    background: #fffdf8;
+    color: var(--ink);
+    font: 18px/1.5 'Cormorant Garamond', Georgia, serif;
+    resize: vertical;
+}
+
+.public-rsvp-form .invitation-button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.public-rsvp-later {
+    background: transparent;
+    border: 0;
+    color: var(--olive);
+    padding: 10px;
+    font: inherit;
+    font-size: 17px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.public-rsvp-error {
+    color: #963f38;
+    font-size: 17px;
+    margin: 0;
+}
+
+.public-rsvp :is(button, input, textarea, a):focus-visible, .public-rsvp-shortcut a:focus-visible {
+    outline: 2px solid var(--olive);
+    outline-offset: 4px;
+}
+
+.public-rsvp :disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+@media (max-width: 480px) {
+    .public-rsvp-dialog {
+        padding: 32px 20px 20px;
+    }
+
+    .public-rsvp-dialog .public-rsvp-intro {
+        font-size: 18px;
+    }
+
+    .public-rsvp-shortcut {
+        gap: 8px;
+        font-size: 17px;
+        text-align: center;
+    }
+
+    .public-rsvp-shortcut a {
+        justify-content: center;
+        width: 100%;
+    }
+}

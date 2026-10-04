@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['konvitte_invite_type_id', 'bride_name', 'groom_name', 'groom_father_name', 'groom_mother_name', 'bride_father_name', 'bride_mother_name', 'event_date', 'venue', 'google_maps_link', 'bible_text', 'bible_reference', 'couple_text', 'celebration_text', 'instructions'])]
+#[Fillable(['konvitte_invite_type_id', 'bride_name', 'groom_name', 'groom_father_name', 'groom_mother_name', 'bride_father_name', 'bride_mother_name', 'event_date', 'venue', 'google_maps_link', 'bible_text', 'bible_reference', 'couple_text', 'celebration_text', 'instructions', 'rsvp_enabled'])]
 class KonvitteInvitation extends Model
 {
 
@@ -61,6 +61,6 @@ class KonvitteInvitation extends Model
 
     protected function casts(): array
     {
-        return ['event_date' => 'datetime'];
+        return ['event_date' => 'datetime', 'rsvp_enabled' => 'boolean'];
     }
 }

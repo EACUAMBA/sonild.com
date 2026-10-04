@@ -11,6 +11,7 @@ import {
     Input,
     Row,
     Select,
+    Switch,
     Tag,
     TimePicker,
     Typography,
@@ -29,6 +30,7 @@ type ExistingInvite =
         id: number;
         slug: string | null;
         inviteTypeId: number;
+        rsvpEnabled: boolean;
         nomeNoiva: string;
         nomeNoivo: string;
         nomePaiNoivo: string;
@@ -59,6 +61,7 @@ type Props = {
 };
 type FormData = {
     inviteTypeId: string;
+    rsvpEnabled: boolean;
     nomeNoiva: string;
     nomeNoivo: string;
     nomePaiNoivo: string;
@@ -89,6 +92,7 @@ const icons = [{value: 'church', label: 'Igreja'}, {value: 'camera', label: 'Fot
 const emptyProgram = (): ProgramItem => ({hora: '', nome: '', localizacao: '', googleMapsLink: '', icon: 'calendar'});
 const emptyContact = (): Contact => ({nome: '', telefone: '', email: ''});
 const initialData = (convite: ExistingInvite): FormData => ({
+    rsvpEnabled: convite?.rsvpEnabled ?? false,
     inviteTypeId: convite ? String(convite.inviteTypeId) : '',
     nomeNoiva: convite?.nomeNoiva ?? '',
     nomeNoivo: convite?.nomeNoivo ?? '',
@@ -162,7 +166,7 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
                 <Typography.Paragraph>Configure o conteúdo do convite de casamento num único
                     formulário.</Typography.Paragraph></div>
             <Form id="konvitte-invitation-form" layout="vertical" disabled={form.processing} onFinish={submit}
-                  fields={Object.entries(form.data).filter(([, value]) => typeof value === 'string').map(([name, value]) => ({
+                  fields={Object.entries(form.data).filter(([, value]) => typeof value === 'string' || typeof value === 'boolean').map(([name, value]) => ({
                       name,
                       value
                   }))}
@@ -191,6 +195,13 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
                                                       label="Ligação do Google Maps" {...errorProps('googleMapsLink')}><Input
                                 type="url" maxLength={500} placeholder="https://maps.google.com/..."/></Form.Item></Col>
                         </Row>
+                    </Card>
+                    <Card title="Confirmação de presença (RSVP)">
+                        <Form.Item name="rsvpEnabled" label="Ativar confirmação de presença"
+                                   valuePropName="checked" {...errorProps('rsvpEnabled')}
+                                   extra="Ao abrir a sua ligação pessoal, os convidados que ainda não responderam verão o formulário de confirmação. As respostas e mensagens ficam disponíveis no menu RSVPs.">
+                            <Switch checkedChildren="Ativa" unCheckedChildren="Inativa"/>
+                        </Form.Item>
                     </Card>
                     <Card title="Fotografias e música">
                         <Typography.Paragraph type="secondary">Imagens até 5 MB. Música em MP3, WAV ou OGG até 20

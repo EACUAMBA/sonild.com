@@ -1,3 +1,4 @@
+import PublicRsvp, {type RsvpResponse} from '@/components/invitations/PublicRsvp';
 import {Head} from '@inertiajs/react';
 import {
     CalendarDays,
@@ -14,6 +15,7 @@ import {type FormEvent, useEffect, useMemo, useRef, useState} from 'react';
 import '../../css/invitation.css';
 
 type InvitationData = {
+    rsvpEnabled?: boolean; rsvpUrl?: string | null; rsvp?: RsvpResponse | null;
     groom: string; bride: string; guest: string; date: string; dateLabel: string; dayLabel: string;
     bible: string | null; bibleReference: string | null; table: string; invitationType: string;
     guestLimit: string; children: string; parents: { groom: string; bride: string }; venue: string; address: string;
@@ -199,6 +201,11 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                         <h1>{invitation.groom} <span>&amp;</span> {invitation.bride}</h1><p>{invitation.bible}</p>
                         <small>{invitation.bibleReference}</small></div>
                 </header>
+                {invitationData?.rsvpEnabled &&
+                    <nav className="public-rsvp-shortcut" aria-label="Confirmação de presença">
+                        <MailOpen size={18}/><span>A sua presença é especial para nós.</span><a
+                        href="#confirmacao-presenca">Confirmar presença <ChevronRight size={16}/></a>
+                    </nav>}
                 <section className="invitation-section couple-section"><SectionHeading eyebrow="A nossa história"
                                                                                        title="Com as nossas famílias"
                                                                                        icon={<Heart
@@ -268,6 +275,9 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                                                                                      className={index === galleryIndex ? 'active' : ''}
                                                                                      onClick={() => setGalleryIndex(index)}/>)}</div>
                     </section>}
+                {invitationData?.rsvpEnabled &&
+                    <PublicRsvp key={invitationData.rsvpUrl ?? 'general'} guest={invitation.guest}
+                                url={invitationData.rsvpUrl ?? null} response={invitationData.rsvp ?? null}/>}
                 {!invitationData && <>
                     <section className="invitation-section rsvp-section"><SectionHeading eyebrow="A sua presença"
                                                                                      title="Confirme connosco"

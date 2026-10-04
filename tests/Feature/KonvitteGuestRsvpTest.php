@@ -43,3 +43,41 @@ it('enforces one response per guest in the database', function () {
 it('requires an existing guest', function () {
     expect(fn() => KonvitteGuestRsvp::create(['konvitte_guest_id' => 999999, 'status' => 'PENDING']))->toThrow(QueryException::class);
 });
+
+it('accepts and updates public RSVP responses only while the invitation is enabled', function () {
+    $this->withSession(['_token' => 'rsvp-test'])->withHeader('X-CSRF-TOKEN', 'rsvp-test');
+    $this->invitation->slug()->create(['slug' => 'rsvp-wedding']);
+    $this->guest->slug()->create(['slug' => 'maria']);
+    $url = '/konvitte/rsvp-wedding/maria/rsvp';
+    $this->post($url, ['status' => 'CONFIRMED'])->assertForbidden();
+    $this->invitation->update(['rsvp_enabled' => true]);
+    $this->get('/konvitte/rsvp-wedding/maria')->assertOk()->assertInertia(fn($page) => $page
+        ->where('invitationData.rsvpEnabled', true)->where('invitationData.rsvpUrl', $url)->where('invitationData.rsvp', null));
+    $this->post($url, ['status' => 'CONFIRMED', 'message' => 'Estaremos presentes!'])->assertSessionHasNoErrors()->assertRedirect('/konvitte/rsvp-wedding/maria');
+    $this->post($url, ['status' => 'DECLINED', 'message' => 'Não poderemos ir.'])->assertSessionHasNoErrors();
+    expect(KonvitteGuestRsvp::count())->toBe(1)->and($this->guest->fresh()->rsvp->status)->toBe('DECLINED');
+    $this->get('/konvitte/rsvp-wedding/maria')->assertInertia(fn($page) => $page->where('invitationData.rsvp.message', 'Não poderemos ir.'));
+    $this->invitation->update(['rsvp_enabled' => false]);
+    $this->post($url, ['status' => 'CONFIRMED'])->assertForbidden();
+    expect($this->guest->fresh()->rsvp->status)->toBe('DECLINED');
+});
+
+it('validates public responses and does not expose or accept another guests RSVP', function () {
+    $this->withSession(['_token' => 'rsvp-test'])->withHeader('X-CSRF-TOKEN', 'rsvp-test');
+    $this->invitation->update(['rsvp_enabled' => true]);
+    $this->invitation->slug()->create(['slug' => 'rsvp-wedding']);
+    $this->guest->slug()->create(['slug' => 'maria']);
+    $other = $this->invitation->replicate();
+    $other->save();
+    $other->slug()->create(['slug' => 'other-wedding']);
+    $otherGuest = $other->guests()->create(['name' => 'Outro', 'max_guests' => 1]);
+    $otherGuest->slug()->create(['slug' => 'outro']);
+    $this->post('/konvitte/rsvp-wedding/outro/rsvp', ['status' => 'CONFIRMED'])->assertNotFound();
+    $this->post('/konvitte/unknown/maria/rsvp', ['status' => 'CONFIRMED'])->assertNotFound();
+    $url = '/konvitte/rsvp-wedding/maria/rsvp';
+    $this->post($url, ['status' => 'invalid', 'message' => str_repeat('a', 5001)])->assertSessionHasErrors(['status', 'message']);
+    expect(KonvitteGuestRsvp::count())->toBe(0);
+    $this->post($url, ['status' => 'PENDING', 'konvitte_guest_id' => $otherGuest->id])->assertSessionHasNoErrors();
+    expect($this->guest->fresh()->rsvp->status)->toBe('PENDING')->and($otherGuest->fresh()->rsvp)->toBeNull();
+    $this->get('/konvitte/rsvp-wedding')->assertInertia(fn($page) => $page->where('invitationData.rsvpUrl', null)->where('invitationData.rsvp', null));
+});

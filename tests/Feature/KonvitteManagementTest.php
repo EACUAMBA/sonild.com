@@ -285,3 +285,17 @@ it('handles an empty RSVP screen and requires management access', function () {
         ->where('invitation', null)->where('summary.total', 0)->has('responses.data', 0));
     $this->actingAs(User::factory()->create())->get('/backoffice/konvitte/rsvps')->assertForbidden();
 });
+
+it('saves and exposes the invitation RSVP activation setting', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    expect($invitation->fresh()->rsvp_enabled)->toBeFalse();
+    $payload = ['inviteTypeId' => $invitation->konvitte_invite_type_id, 'nomeNoiva' => 'Ana', 'nomeNoivo' => 'João', 'nomePaiNoivo' => 'A', 'nomeMaeNoivo' => 'B', 'nomePaiNoiva' => 'C', 'nomeMaeNoiva' => 'D', 'data' => '2027-06-26 15:00', 'local' => 'Maputo', 'textoCelebre' => 'Celebre connosco'];
+    $url = "/backoffice/konvitte/invitations/{$invitation->id}";
+    $this->post($url, $payload + ['rsvpEnabled' => '1'])->assertSessionHasNoErrors();
+    $this->get($url)->assertInertia(fn(Assert $page) => $page->where('convite.rsvpEnabled', true));
+    $this->post($url, $payload)->assertSessionHasNoErrors();
+    expect($invitation->fresh()->rsvp_enabled)->toBeTrue();
+    $this->post($url, $payload + ['rsvpEnabled' => '0'])->assertSessionHasNoErrors();
+    expect($invitation->fresh()->rsvp_enabled)->toBeFalse();
+});

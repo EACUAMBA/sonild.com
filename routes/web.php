@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 Route::get('konvitte/{slug}/{guestSlug?}', [PublicKonvitteInvitationController::class, 'show'])->name('konvitte.guest');
+Route::post('konvitte/{slug}/{guestSlug}/rsvp', [PublicKonvitteInvitationController::class, 'storeRsvp'])->name('konvitte.rsvp.store');
 
 Route::get('email/verify', fn() => redirect(
     Filament::getPanel('backoffice')->getEmailVerificationPromptUrl(),
