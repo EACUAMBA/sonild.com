@@ -37,10 +37,12 @@ export type KonvitteManagementProps = {
     invitation: Invitation | null;
     invitations: { id: number; name: string }[];
     tables: Table[];
+    filters: { table: string | null };
     guests: {
         data: Guest[];
         current_page: number;
         last_page: number;
+        total: number;
     };
 };
 
@@ -51,7 +53,7 @@ export default function KonvitteManagement(props: KonvitteManagementProps & { se
     return <ManagementForm key={`${props.section}:${props.invitation?.id ?? 'none'}`} {...props}/>;
 }
 
-function ManagementForm({invitation, invitations, tables, guests, section}: KonvitteManagementProps & {
+function ManagementForm({invitation, invitations, tables, guests, filters, section}: KonvitteManagementProps & {
     section: 'tables' | 'guests'
 }) {
     const isGuest = section === 'guests';
@@ -125,10 +127,11 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
             tableForm.post(`/backoffice/konvitte/tables/${invitation.id}`, options);
         }
     };
-    const paginate = (page: number) => router.get(`/backoffice/konvitte/guests/${invitation!.id}`, {page}, {
+    const filterGuests = (table: string | null, page = 1) => router.get(`/backoffice/konvitte/guests/${invitation!.id}`, {page, ...(table ? {table} : {})}, {
         preserveState: true,
         preserveScroll: true
     });
+    const paginate = (page: number) => filterGuests(filters.table, page);
     const screens = Grid.useBreakpoint();
     const fieldError = (error?: string) => ({validateStatus: error ? 'error' as const : undefined, help: error});
     const guestFields = Object.entries(form.data).map(([name, value]) => ({name, value}));
@@ -227,13 +230,35 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                     </Form>
                 </Card></div>}
                 <Card styles={{body: {padding: screens.sm ? 24 : 12, minWidth: 0}}}>
+                    {isGuest && filters.table &&
+                        <Flex wrap justify="space-between" align="center" gap="small" style={{marginBottom: 16}}>
+                            <Typography.Text>Mesa: <Typography.Text
+                                strong>{filters.table === 'none' ? 'Sem mesa' : tables.find((table) => String(table.id) === filters.table)?.name}</Typography.Text> · {guests.total} convidado(s)</Typography.Text>
+                            <Button onClick={() => filterGuests(null)}>Limpar filtro</Button>
+                        </Flex>}
                     {isGuest ? <AntTable rowKey="id" dataSource={guests.data} pagination={false} scroll={{x: 720}}
-                                         locale={{emptyText: 'Ainda não existem convidados.'}}
+                                         locale={{
+                                             emptyText: filters.table ? 'Não existem convidados nesta mesa.' : 'Ainda não existem convidados.',
+                                             filterConfirm: 'Aplicar',
+                                             filterReset: 'Limpar'
+                                         }}
+                                         onChange={(_, selectedFilters) => filterGuests(selectedFilters.table?.[0] != null ? String(selectedFilters.table[0]) : null)}
                                          columns={[
                                              {title: 'Nome', dataIndex: 'name'},
                                              {
                                                  title: 'Mesa',
                                                  dataIndex: 'table',
+                                                 key: 'table',
+                                                 filters: [{
+                                                     text: 'Sem mesa',
+                                                     value: 'none'
+                                                 }, ...tables.map((table) => ({
+                                                     text: table.name,
+                                                     value: String(table.id)
+                                                 }))],
+                                                 filterMultiple: false,
+                                                 filterSearch: true,
+                                                 filteredValue: filters.table ? [filters.table] : null,
                                                  render: (value: string | null) => value ?? 'Sem mesa'
                                              },
                                              {title: 'Máximo de pessoas', dataIndex: 'maxGuests'},
@@ -268,9 +293,9 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                                       key: 'capacity',
                                       render: (_, table) => capacityLabel(table)
                                   }, {
-                                      title: 'Lugares previstos',
+                                      title: 'Ocupação',
                                       dataIndex: 'allocatedSeats'
-                                  }, {title: 'Convidados registados', dataIndex: 'guestCount'}, {
+                                  }, {
                                       ...tableActionsColumn,
                                       width: 120,
                                       render: (_, table) => <Flex vertical={!screens.lg} wrap gap="small" justify="end"
@@ -281,7 +306,7 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                                   }]}/>}
                     {isGuest && guests.last_page > 1 &&
                         <Flex justify="end" style={{marginTop: 16}}><Pagination current={guests.current_page}
-                                                                                total={guests.last_page * 10}
+                                                                                total={guests.total}
                                                                                 pageSize={10} showSizeChanger={false}
                                                                                 simple={!screens.sm} disabled={busy}
                                                                                 onChange={paginate}/></Flex>}

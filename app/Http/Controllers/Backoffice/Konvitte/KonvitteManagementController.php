@@ -67,13 +67,27 @@ class KonvitteManagementController extends Controller
     {
         $this->ensureAccess();
         $invitation ??= KonvitteInvitation::latest('id')->first();
+        $tableFilter = $page === 'KonvitteGuests' ? request()->query('table') : null;
+        if ($tableFilter !== null && $tableFilter !== '') {
+            abort_unless(is_string($tableFilter) && ($tableFilter === 'none' || ctype_digit($tableFilter)), 400);
+            if ($tableFilter !== 'none') {
+                abort_unless($invitation?->tables()->whereKey($tableFilter)->exists(), 404);
+            }
+        } else {
+            $tableFilter = null;
+        }
+
         return Inertia::render('backoffice/Konvitte/' . $page, [
             'invitation' => $invitation ? ['id' => $invitation->id, 'name' => $invitation->groom_name . ' & ' . $invitation->bride_name, 'slug' => $invitation->slug?->slug] : null,
             'invitations' => KonvitteInvitation::latest('id')->get()->map(fn($item) => ['id' => $item->id, 'name' => $item->groom_name . ' & ' . $item->bride_name]),
             'tables' => $invitation?->tables()->withCount('guests')->withSum('guests', 'max_guests')->get()->map(fn($table) => ['id' => $table->id, 'name' => $table->name, 'guestCount' => $table->guests_count, 'capacity' => $table->capacity, 'allocatedSeats' => (int)$table->guests_sum_max_guests]) ?? [],
-            'guests' => $invitation && $page === 'KonvitteGuests' ? $invitation->guests()->with(['table', 'slug'])->paginate(10)->through(fn($guest) => [
+            'filters' => ['table' => $tableFilter],
+            'guests' => $invitation && $page === 'KonvitteGuests' ? $invitation->guests()->with(['table', 'slug'])
+                ->when($tableFilter === 'none', fn($query) => $query->whereNull('konvitte_table_id'))
+                ->when($tableFilter !== null && $tableFilter !== 'none', fn($query) => $query->where('konvitte_table_id', $tableFilter))
+                ->orderBy('id')->paginate(10)->withQueryString()->through(fn($guest) => [
                 'id' => $guest->id, 'name' => $guest->name, 'table' => $guest->table?->name, 'tableId' => $guest->konvitte_table_id, 'maxGuests' => $guest->max_guests, 'slug' => $guest->slug?->slug,
-            ]) : ['data' => [], 'current_page' => 1, 'last_page' => 1],
+                ]) : ['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0],
         ]);
     }
 

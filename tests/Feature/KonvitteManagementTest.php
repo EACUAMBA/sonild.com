@@ -209,3 +209,36 @@ it('rejects invalid, duplicate and unauthorised table edits', function () {
     $this->actingAs(User::factory()->create())->put($url, ['name' => 'Alterada', 'capacity' => 6])->assertForbidden();
     expect($table->fresh()->name)->toBe('Família')->and($table->fresh()->capacity)->toBe(8);
 });
+
+it('filters guests by table across pages and supports unassigned guests and clearing', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $table = $invitation->tables()->create(['name' => 'Família']);
+    $empty = $invitation->tables()->create(['name' => 'Vazia']);
+    $invitation->guests()->create(['name' => 'Sem mesa', 'max_guests' => 1]);
+    for ($i = 1; $i <= 12; $i++) {
+        $invitation->guests()->create(['name' => "Convidado $i", 'konvitte_table_id' => $table->id, 'max_guests' => 1]);
+    }
+    $url = "/backoffice/konvitte/guests/{$invitation->id}";
+    $this->get("$url?table={$table->id}")->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->where('filters.table', (string)$table->id)->where('guests.total', 12)->where('guests.last_page', 2)
+        ->has('guests.data', 10)->where('guests.data.0.tableId', $table->id)
+        ->where('guests.next_page_url', fn($url) => str_contains($url, "table={$table->id}") && str_contains($url, 'page=2')));
+    $this->get("$url?table={$table->id}&page=2")->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->where('filters.table', (string)$table->id)->has('guests.data', 2)->where('guests.data.0.name', 'Convidado 11'));
+    $this->get("$url?table=none")->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->where('guests.total', 1)->where('guests.data.0.name', 'Sem mesa')->where('guests.data.0.tableId', null));
+    $this->get("$url?table={$empty->id}")->assertOk()->assertInertia(fn(Assert $page) => $page->where('guests.total', 0)->has('guests.data', 0));
+    $this->get($url)->assertOk()->assertInertia(fn(Assert $page) => $page->where('filters.table', null)->where('guests.total', 13));
+});
+
+it('rejects table filters outside the invitation and malformed filters', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $other = konvitteManagedInvitation();
+    $table = $other->tables()->create(['name' => 'Outra']);
+    $url = "/backoffice/konvitte/guests/{$invitation->id}";
+    $this->get("$url?table={$table->id}")->assertNotFound();
+    $this->get("$url?table=invalid")->assertStatus(400);
+    $this->get("$url?table[]=1")->assertStatus(400);
+});
