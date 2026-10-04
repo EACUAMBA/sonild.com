@@ -1,16 +1,7 @@
+import InvitationGallery from '@/components/invitations/InvitationGallery';
 import PublicRsvp, {type RsvpResponse} from '@/components/invitations/PublicRsvp';
 import {Head} from '@inertiajs/react';
-import {
-    CalendarDays,
-    ChevronLeft,
-    ChevronRight,
-    Gift,
-    Heart,
-    MailOpen,
-    MessageCircle,
-    Send,
-    Sparkles
-} from 'lucide-react';
+import {CalendarDays, ChevronRight, Gift, Heart, MailOpen, MessageCircle, Send, Sparkles} from 'lucide-react';
 import {type FormEvent, useEffect, useMemo, useRef, useState} from 'react';
 import '../../css/invitation.css';
 
@@ -144,7 +135,6 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
     const dayNumber = eventDate.toLocaleDateString('pt-PT', {...dateOptions, day: 'numeric'});
     const yearLabel = eventDate.toLocaleDateString('pt-PT', {...dateOptions, year: 'numeric'});
     const [opened, setOpened] = useState(false);
-    const [galleryIndex, setGalleryIndex] = useState(0);
     const [rsvp, setRsvp] = useState('CONFIRMED');
     const [rsvpMessage, setRsvpMessage] = useState('');
     const [messages, setMessages] = useState(invitationData ? [] : initialMessages);
@@ -154,11 +144,6 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
     useEffect(() => {
         if (opened) contentRef.current?.scrollIntoView({behavior: 'smooth'});
     }, [opened]);
-    useEffect(() => {
-        if (gallery.length < 2) return;
-        const timer = window.setInterval(() => setGalleryIndex((current) => (current + 1) % gallery.length), 5000);
-        return () => window.clearInterval(timer);
-    }, [gallery.length]);
     const submitRsvp = (event: FormEvent) => {
         event.preventDefault();
         window.alert(`Obrigado, ${invitation.guest}! A sua resposta foi registada.`);
@@ -261,19 +246,7 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                 {gallery.length > 0 &&
                     <section className="invitation-section gallery-section"><SectionHeading eyebrow="As nossas memórias"
                                                                                         title="Momentos especiais"/>
-                    <div className="gallery-slider"><img src={gallery[galleryIndex].src}
-                                                         alt={gallery[galleryIndex].alt}/>
-                        <button aria-label="Foto anterior"
-                                onClick={() => setGalleryIndex((galleryIndex - 1 + gallery.length) % gallery.length)}>
-                            <ChevronLeft/></button>
-                        <button aria-label="Próxima foto"
-                                onClick={() => setGalleryIndex((galleryIndex + 1) % gallery.length)}><ChevronRight/>
-                        </button>
-                    </div>
-                    <div className="gallery-dots">{gallery.map((_, index) => <button key={index}
-                                                                                     aria-label={`Foto ${index + 1}`}
-                                                                                     className={index === galleryIndex ? 'active' : ''}
-                                                                                     onClick={() => setGalleryIndex(index)}/>)}</div>
+                        <InvitationGallery photos={gallery}/>
                     </section>}
                 {invitationData?.rsvpEnabled &&
                     <PublicRsvp key={invitationData.rsvpUrl ?? 'general'} guest={invitation.guest}
