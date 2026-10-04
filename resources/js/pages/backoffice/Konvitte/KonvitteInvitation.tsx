@@ -1,3 +1,4 @@
+import InvitationPalettePreview from '@/components/invitations/InvitationPalettePreview';
 import {Head, router, useForm} from '@inertiajs/react';
 import {ArrowLeftOutlined, DeleteOutlined, PlusOutlined, SaveOutlined, UploadOutlined} from '@ant-design/icons';
 import {
@@ -213,7 +214,9 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
                         <Typography.Paragraph type="secondary">Imagens até 5 MB. Música em MP3, WAV ou OGG até 20
                             MB.</Typography.Paragraph>
                         <Row gutter={16}>
-                            <Col xs={24} md={12}>{fileField('fotoCapa', 'Foto de capa', 'image/*')}</Col>
+                            <Col xs={24}
+                                 md={12}>{fileField('fotoCapa', 'Foto de capa', 'image/*')}<InvitationPalettePreview
+                                file={form.data.fotoCapa}/></Col>
                             <Col xs={24} md={12}>{fileField('fotoInicial', 'Foto inicial', 'image/*')}</Col>
                             <Col xs={24}
                                  md={12}>{fileField('fotoInformacoes', 'Foto da área dos noivos', 'image/*')}</Col>

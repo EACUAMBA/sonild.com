@@ -4,12 +4,22 @@
     --ink: #3f4b3d;
     --olive: #56664d;
     --gold: #a89d78;
+    --names-gold: #e7c97f;
+    --names-gold-on-paper: #856522;
     --cream: #fffaf0;
     --paper: #f8f6ef;
+    --surface: #fffdf8;
+    --soft: #efe8d6;
+    --border: #c9c2ac;
+    --muted: #66715d;
+    --accent-light: #e4d7ad;
+    --cover-shade: 115 18% 14%;
     min-height: 100svh;
     background: var(--paper);
     color: var(--ink);
     font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 20px;
+    line-height: 1.5;
     position: relative;
     isolation: isolate
 }
@@ -73,8 +83,8 @@
 
 .invitation-eyebrow {
     font-family: Arial, sans-serif;
-    font-size: 9px;
-    letter-spacing: 3.5px;
+    font-size: 12px;
+    letter-spacing: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,8 +106,8 @@
     gap: 7px;
     text-transform: uppercase;
     letter-spacing: 3px;
-    font: 10px Arial, sans-serif;
-    color: #f3d58e;
+    font: 12px Arial, sans-serif;
+    color: var(--accent-light);
     margin: 0 0 18px
 }
 
@@ -107,12 +117,12 @@
     font-weight: 400;
     line-height: 1.2;
     margin: 24px 0 0;
-    color: #fffaf0;
+    color: var(--names-gold);
     text-shadow: 0 2px 22px #172011aa
 }
 
 .invitation h1 > span {
-    color: #f1d48d;
+    color: var(--names-gold);
     font-size: .7em;
     padding: 0 5px
 }
@@ -142,13 +152,13 @@
 }
 
 .date-star {
-    color: #f1d48d;
+    color: var(--accent-light);
     font-size: 12px
 }
 
 .wedding-day {
-    font: 9px Arial, sans-serif;
-    letter-spacing: 5px;
+    font: 14px/1.5 Arial, sans-serif;
+    letter-spacing: 2px;
     margin-top: 10px;
     color: #fff8df;
     text-shadow: 0 1px 14px #172011aa
@@ -167,10 +177,10 @@
 .bible-quote small {
     display: block;
     margin-top: 8px;
-    font: 9px Arial, sans-serif;
+    font: 12px Arial, sans-serif;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #f3d58e
+    color: var(--accent-light)
 }
 
 .invitation-label {
@@ -182,8 +192,12 @@
 .guest-name {
     font-size: clamp(26px, 4vw, 34px);
     font-weight: 500;
-    margin: 7px 0 10px;
-    color: #fffaf0;
+    margin: 12px auto 24px;
+    max-width: 24ch;
+    line-height: 1.3;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+    color: var(--names-gold);
     text-shadow: 0 1px 18px #172011aa
 }
 
@@ -196,7 +210,7 @@
     background: var(--olive);
     color: #fffdf6;
     padding: 14px 22px;
-    font: 11px Arial, sans-serif;
+    font: 13px Arial, sans-serif;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     cursor: pointer;
@@ -209,7 +223,7 @@
 }
 
 .open-invitation:hover, .invitation-button:hover {
-    background: #3e5039;
+    background: var(--ink);
     transform: translateY(-2px)
 }
 
@@ -263,8 +277,8 @@
 
 .hero-copy small {
     letter-spacing: 2px;
-    color: #f3d58e;
-    font: 10px Arial, sans-serif
+    color: var(--accent-light);
+    font: 12px Arial, sans-serif
 }
 
 .invitation-section {
@@ -275,7 +289,7 @@
 }
 
 .invitation-section:nth-child(odd) {
-    background: #fbf8ef
+    background: var(--paper)
 }
 
 .invitation-section-heading {
@@ -283,9 +297,10 @@
 }
 
 .section-icon {
-    width: 21px;
+    width: 24px;
+    height: 24px;
     color: var(--gold);
-    margin-bottom: 14px
+    margin: 0 auto 14px
 }
 
 .invitation-section-heading .invitation-eyebrow {
@@ -319,13 +334,13 @@
     display: block;
     text-transform: uppercase;
     letter-spacing: 2px;
-    font: 9px Arial, sans-serif;
-    color: #8f8b77
+    font: 12px Arial, sans-serif;
+    color: var(--muted)
 }
 
 .couple-names h3 {
     font: 46px 'Italianno', cursive;
-    color: var(--olive);
+    color: var(--names-gold-on-paper);
     margin: 8px 0
 }
 
@@ -339,7 +354,7 @@
 }
 
 .guest-section {
-    background: #56664d !important;
+    background: var(--olive) !important;
     color: #fffaf0
 }
 
@@ -348,11 +363,34 @@
 }
 
 .guest-section .invitation-eyebrow span {
-    background: #d9cf9e
+    background: var(--accent-light)
 }
 
 .guest-greeting {
-    font-size: 25px
+    display: grid;
+    gap: 12px;
+    max-width: 580px;
+    margin: 28px auto 18px;
+    text-align: center;
+}
+
+.guest-greeting > span {
+    font: 12px Arial, sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--cream);
+}
+
+.guest-greeting > strong {
+    display: block;
+    max-width: 24ch;
+    margin-inline: auto;
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--names-gold);
+    text-wrap: balance;
+    overflow-wrap: anywhere;
 }
 
 .guest-section .section-icon {
@@ -375,19 +413,19 @@
     gap: 12px;
     min-width: 0;
     padding: 28px 20px;
-    border: 1px solid #d8cc9c66;
+    border: 1px solid color-mix(in srgb, var(--accent-light) 40%, transparent);
     border-radius: 18px;
     background: linear-gradient(145deg, #fffaf00d, #fffaf003);
 }
 
 .guest-card > div > svg {
-    color: #e4d7ad;
+    color: var(--accent-light);
     margin-bottom: 4px;
 }
 
 .guest-card span {
-    color: #e4d7ad;
-    font-size: 10px;
+    color: var(--accent-light);
+    font-size: 12px;
     letter-spacing: 2.5px;
 }
 
@@ -410,7 +448,7 @@
 }
 
 .date-section {
-    background: #efe8d6 !important
+    background: var(--soft) !important
 }
 
 .date-section .invitation-eyebrow {
@@ -462,7 +500,7 @@
     grid-template-columns:80px 1fr;
     gap: 24px;
     padding: 20px 0;
-    border-bottom: 1px solid #c9c2ac
+    border-bottom: 1px solid var(--border)
 }
 
 .timeline-item time {
@@ -479,7 +517,7 @@
 .timeline-item p {
     font-size: 17px;
     margin: 5px 0 0;
-    color: #777565
+    color: var(--muted)
 }
 
 .countdown-section {
@@ -492,7 +530,7 @@
 }
 
 .countdown-section .invitation-eyebrow span {
-    background: #d9cf9e
+    background: var(--accent-light)
 }
 
 .countdown-grid {
@@ -507,7 +545,7 @@
     display: grid;
     gap: 7px;
     padding: 18px 5px;
-    border: 1px solid #d8cc9c77
+    border: 1px solid color-mix(in srgb, var(--accent-light) 47%, transparent)
 }
 
 .countdown-item strong {
@@ -516,10 +554,10 @@
 }
 
 .countdown-item span {
-    font: 9px Arial, sans-serif;
+    font: 12px Arial, sans-serif;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #e5dcae
+    color: var(--accent-light)
 }
 
 /* Splide gallery: a central photograph with the neighbouring images in view. */
@@ -542,7 +580,7 @@
     height: clamp(280px, 55vw, 580px);
     object-fit: cover;
     border-radius: 8px;
-    border: 1px solid #d8ceb4;
+    border: 1px solid var(--border);
 }
 
 .invitation-gallery-main .splide__slide {
@@ -561,7 +599,7 @@
     opacity: .95;
     width: 42px;
     height: 42px;
-    border: 1px solid #c9c2ac;
+    border: 1px solid var(--border);
 }
 
 .invitation-gallery-main .splide__arrow svg {
@@ -596,7 +634,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid #c9c2ac;
+    border: 1px solid var(--border);
     background: var(--cream);
     color: var(--olive);
     border-radius: 24px;
@@ -657,7 +695,7 @@
 }
 
 .rsvp-section {
-    background: #f0e9d9 !important
+    background: var(--soft) !important
 }
 
 .invitation-form {
@@ -671,8 +709,8 @@
 .invitation-form select, .invitation-form input, .invitation-form textarea {
     width: 100%;
     box-sizing: border-box;
-    border: 1px solid #c9c2ac;
-    background: #fffdf8;
+    border: 1px solid var(--border);
+    background: var(--surface);
     color: var(--ink);
     padding: 13px;
     font: 17px 'Cormorant Garamond', serif
@@ -701,8 +739,8 @@
 .messages-list article {
     padding: 20px;
     text-align: left;
-    background: #fffdf8;
-    border: 1px solid #ded6c1
+    background: var(--surface);
+    border: 1px solid var(--border)
 }
 
 .messages-list article > svg {
@@ -716,10 +754,10 @@
 }
 
 .messages-list strong {
-    font: 10px Arial, sans-serif;
+    font: 12px Arial, sans-serif;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: #85806e
+    color: var(--muted)
 }
 
 .message-form {
@@ -727,7 +765,7 @@
 }
 
 .gifts-section {
-    background: #fbf8ef !important
+    background: var(--paper) !important
 }
 
 .gift-grid {
@@ -740,8 +778,8 @@
 
 .gift-grid article {
     padding: 25px 20px;
-    background: #fffdf8;
-    border: 1px solid #ded6c1
+    background: var(--surface);
+    border: 1px solid var(--border)
 }
 
 .gift-grid article > svg {
@@ -765,13 +803,13 @@
     gap: 10px;
     min-height: 360px;
     padding: 70px 24px;
-    background: #3f4b3d;
+    background: var(--ink);
     color: #fffaf0;
     text-align: center
 }
 
 .invitation-footer-full > svg {
-    color: #e7c97f
+    color: var(--accent-light)
 }
 
 .invitation-footer-full p {
@@ -781,22 +819,22 @@
 
 .invitation-footer-full p strong {
     font: 58px 'Italianno', cursive;
-    color: #e7c97f
+    color: var(--names-gold)
 }
 
 .eventtu-note {
     display: grid;
     gap: 6px;
-    border-top: 1px solid #d9cf9e66;
+    border-top: 1px solid color-mix(in srgb, var(--accent-light) 40%, transparent);
     padding-top: 25px;
     margin-top: 15px
 }
 
 .eventtu-note span, .eventtu-note small {
-    font: 9px Arial, sans-serif;
+    font: 12px Arial, sans-serif;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #d9cf9e
+    color: var(--accent-light)
 }
 
 .eventtu-note strong {
@@ -920,7 +958,7 @@
     }
 
     .countdown-item span {
-        font-size: 7px
+        font-size: 11px
     }
 
     .timeline-item {
@@ -952,8 +990,8 @@
     flex-wrap: wrap;
     gap: 12px 20px;
     padding: 20px 24px;
-    background: #ede8d9;
-    border-bottom: 1px solid #d8ceb4;
+    background: var(--soft);
+    border-bottom: 1px solid var(--border);
     font-size: 18px;
 }
 
@@ -969,8 +1007,8 @@
 
 .public-rsvp {
     scroll-margin-top: 24px;
-    background: radial-gradient(ellipse at top, #fffdf7, #eee8d8) !important;
-    border-block: 1px solid #d8ceb4;
+    background: radial-gradient(ellipse at top, var(--surface), var(--soft)) !important;
+    border-block: 1px solid var(--border);
 }
 
 .public-rsvp-seal {
@@ -978,7 +1016,7 @@
     place-items: center;
     width: 64px;
     height: 64px;
-    border: 1px solid #b9ad87;
+    border: 1px solid var(--border);
     border-radius: 50%;
     margin: 0 auto 20px;
     color: var(--olive);
@@ -1003,7 +1041,7 @@
 .public-rsvp-note {
     margin: 18px auto 0;
     font-size: 17px;
-    color: #66715d;
+    color: var(--muted);
 }
 
 .public-rsvp-status {
@@ -1023,7 +1061,7 @@
     box-sizing: border-box;
     padding: 36px;
     margin: auto;
-    border: 1px solid #b9ad87;
+    border: 1px solid var(--border);
     border-radius: 18px;
     background: var(--cream);
     color: var(--ink);
@@ -1080,7 +1118,7 @@
 
 .public-rsvp-message span {
     font-weight: 400;
-    color: #66715d;
+    color: var(--muted);
 }
 
 .public-rsvp-choice {
@@ -1089,16 +1127,16 @@
     gap: 14px;
     margin-top: 10px;
     padding: 14px 16px;
-    border: 1px solid #d8ceb4;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: #fffdf8;
+    background: var(--surface);
     cursor: pointer;
     transition: background .15s, border-color .15s;
 }
 
 .public-rsvp-choice:has(input:checked) {
     border-color: var(--olive);
-    background: #eaf0e4;
+    background: var(--soft);
 }
 
 .public-rsvp-choice input {
@@ -1118,16 +1156,16 @@
     display: block;
     margin-top: 3px;
     font-size: 16px;
-    color: #66715d;
+    color: var(--muted);
 }
 
 .public-rsvp-form textarea {
     width: 100%;
     box-sizing: border-box;
     padding: 14px;
-    border: 1px solid #d8ceb4;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: #fffdf8;
+    background: var(--surface);
     color: var(--ink);
     font: 18px/1.5 'Cormorant Garamond', Georgia, serif;
     resize: vertical;
@@ -1201,9 +1239,9 @@
     gap: 12px;
     width: min(340px, calc(100vw - 32px));
     padding: 12px 14px;
-    border: 1px solid #c8bd9b;
+    border: 1px solid var(--border);
     border-radius: 48px;
-    background: #fffaf0f5;
+    background: color-mix(in srgb, var(--cream) 96%, transparent);
     color: var(--ink);
     box-shadow: 0 8px 32px #263d2c26;
     backdrop-filter: blur(12px);
@@ -1216,8 +1254,8 @@
     flex: 0 0 42px;
     height: 42px;
     border-radius: 50%;
-    border: 1px solid #c8bd9b;
-    background: #e8ebdf;
+    border: 1px solid var(--border);
+    background: var(--soft);
     color: var(--olive);
 }
 
@@ -1244,7 +1282,7 @@
 
 .invitation-music-info span {
     font-size: 15px;
-    color: #66715d;
+    color: var(--muted);
 }
 
 .invitation-music-info small {
@@ -1296,7 +1334,7 @@
     width: min(100%, 580px);
     margin: 22px auto 0;
     padding: 18px 22px;
-    border: 1px solid #e4d7ad;
+    border: 1px solid var(--accent-light);
     border-radius: 14px;
     background: #fff4d9;
     color: #594923;
@@ -1315,4 +1353,20 @@
 .guest-section .guest-children-alert p {
     margin: 5px 0 0;
     font-size: 16px;
+}
+
+/* Keep the event details comfortably readable on both desktop and mobile. */
+.date-section > p:not(.wedding-day) {
+    font-size: clamp(21px, 3vw, 24px);
+    line-height: 1.5;
+    margin-top: 12px;
+    overflow-wrap: anywhere;
+}
+
+.invitation-eyebrow {
+    line-height: 1.5;
+}
+
+.countdown-item span {
+    letter-spacing: .5px;
 }

@@ -1,3 +1,4 @@
+import useInvitationPalette from '@/hooks/use-invitation-palette';
 import PublicMessages, {type GuestMessage} from '@/components/invitations/PublicMessages';
 import InvitationGallery from '@/components/invitations/InvitationGallery';
 import InvitationMusicPlayer from '@/components/invitations/InvitationMusicPlayer';
@@ -149,6 +150,7 @@ function CalendarButton({invitation}: { invitation: InvitationData }) {
 
 export default function Welcome({invitationData}: { invitationData?: InvitationData }) {
     const invitation = invitationData ?? fallbackInvitation;
+    const palette = useInvitationPalette(invitation.coverImage);
     const schedule = invitationData ? (invitation.program ?? []) : fallbackSchedule;
     const gallery = invitationData ? (invitation.gallery ?? []) : fallbackGallery;
     const eventDate = new Date(invitation.date);
@@ -190,13 +192,14 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
     return <><Head title={`${invitation.groom} & ${invitation.bride} — Convite de casamento`}>
         <meta name="description" content={`Convite de casamento de ${invitation.groom} e ${invitation.bride}.`}/>
     </Head>
-        <main className={`invitation${opened && invitation.music ? ' invitation-with-music' : ''}`} lang="pt">
+        <main className={`invitation${opened && invitation.music ? ' invitation-with-music' : ''}`} lang="pt"
+              style={palette}>
             {invitation.music && <InvitationMusicPlayer key={invitation.music} src={invitation.music}
                                                         title={invitation.musicTitle} artist={invitation.musicArtist}
                                                         visible={opened} audioRef={musicRef}/>}
             {!opened ?
             <section className="invitation-stage invitation-cover-stage" aria-label="Abertura do convite"
-                     style={invitation.coverImage ? {backgroundImage: `linear-gradient(180deg, #1e2a1d66, #1e2a1dcc), url(${JSON.stringify(invitation.coverImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, #7c8a66, #263d2c)'} : undefined}>
+                     style={invitation.coverImage ? {backgroundImage: `linear-gradient(180deg, hsl(var(--cover-shade) / .4), hsl(var(--cover-shade) / .8)), url(${JSON.stringify(invitation.coverImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, var(--olive), var(--ink))'} : undefined}>
                 <div className="invitation-frame" aria-hidden="true"/>
                 <Flowers className="flowers flowers-left"/>
                 <div className="flowers-right"><Flowers className="flowers"/></div>
@@ -215,7 +218,7 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                 </div>
             </section> : <div ref={contentRef} className="invitation-page">
                 <header className="invitation-hero"
-                        style={invitation.heroImage ? {backgroundImage: `linear-gradient(180deg, #1e2a1d33, #1e2a1dcc), url(${JSON.stringify(invitation.heroImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, #7c8a66, #263d2c)'} : undefined}>
+                        style={invitation.heroImage ? {backgroundImage: `linear-gradient(180deg, hsl(var(--cover-shade) / .2), hsl(var(--cover-shade) / .8)), url(${JSON.stringify(invitation.heroImage)})`} : invitationData ? {backgroundImage: 'linear-gradient(160deg, var(--olive), var(--ink))'} : undefined}>
                     <Flowers className="flowers flowers-left"/>
                     <div className="hero-photo"/>
                     <div className="hero-copy"><p className="save-the-date"><Sparkles size={13}/> Save the date</p>
@@ -250,7 +253,8 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                         maxHeight: 400,
                         margin: '20px auto'
                     }}/>}
-                    <p className="guest-greeting">Querido(a) <strong>{invitation.guest}</strong>,</p><p>Este dia será
+                    <p className="guest-greeting"><span>Com carinho, para si</span><strong>{invitation.guest}</strong>
+                    </p><p>Este dia será
                         ainda mais especial com a sua presença.</p>
                     <div className="guest-card">
                         <div><Armchair size={23} strokeWidth={1.4}
