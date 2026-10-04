@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backoffice\Konvitte;
 
 use App\Http\Controllers\Controller;
+use App\Models\Konvitte\KonvitteGuest;
 use App\Models\Konvitte\KonvitteGuestSlug;
 use App\Models\Konvitte\KonvitteInvitation;
 use Illuminate\Http\RedirectResponse;
@@ -56,7 +57,7 @@ class KonvitteManagementController extends Controller
             'invitations' => KonvitteInvitation::latest('id')->get()->map(fn($item) => ['id' => $item->id, 'name' => $item->groom_name . ' & ' . $item->bride_name]),
             'tables' => $invitation?->tables()->withCount('guests')->withSum('guests', 'max_guests')->get()->map(fn($table) => ['id' => $table->id, 'name' => $table->name, 'guestCount' => $table->guests_count, 'capacity' => $table->capacity, 'allocatedSeats' => (int)$table->guests_sum_max_guests]) ?? [],
             'guests' => $invitation && $page === 'KonvitteGuests' ? $invitation->guests()->with(['table', 'slug'])->paginate(10)->through(fn($guest) => [
-                'id' => $guest->id, 'name' => $guest->name, 'table' => $guest->table?->name, 'maxGuests' => $guest->max_guests, 'slug' => $guest->slug?->slug,
+                'id' => $guest->id, 'name' => $guest->name, 'table' => $guest->table?->name, 'tableId' => $guest->konvitte_table_id, 'maxGuests' => $guest->max_guests, 'slug' => $guest->slug?->slug,
             ]) : ['data' => [], 'current_page' => 1, 'last_page' => 1],
         ]);
     }
@@ -68,6 +69,19 @@ class KonvitteManagementController extends Controller
 
     public function storeGuest(Request $request, KonvitteInvitation $invitation): RedirectResponse
     {
+        return $this->saveGuest($request, $invitation);
+    }
+
+    public function updateGuest(Request $request, KonvitteInvitation $invitation, KonvitteGuest $guest): RedirectResponse
+    {
+        $this->ensureAccess();
+        abort_unless($guest->konvitte_invitation_id === $invitation->id, 404);
+
+        return $this->saveGuest($request, $invitation, $guest);
+    }
+
+    private function saveGuest(Request $request, KonvitteInvitation $invitation, ?KonvitteGuest $guest = null): RedirectResponse
+    {
         $this->ensureAccess();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -76,7 +90,7 @@ class KonvitteManagementController extends Controller
             'tableCapacity' => ['nullable', 'integer', 'min:1', 'max:999'],
             'maxGuests' => ['required', 'integer', 'min:1', 'max:999'],
         ], $this->validationMessages(), ['name' => 'nome do convidado', 'tableId' => 'mesa', 'tableName' => 'nome da mesa', 'tableCapacity' => 'capacidade da mesa', 'maxGuests' => 'número máximo de convidados']);
-        DB::transaction(function () use ($data, $invitation): void {
+        DB::transaction(function () use ($data, $invitation, $guest): void {
             $tableId = $data['tableId'] ?? null;
             if (!empty($data['tableName'])) {
                 $table = $invitation->tables()->firstOrCreate(
@@ -85,13 +99,18 @@ class KonvitteManagementController extends Controller
                 );
                 $tableId = $table->id;
             }
-            $guest = $invitation->guests()->create(['name' => $data['name'], 'konvitte_table_id' => $tableId, 'max_guests' => $data['maxGuests']]);
+            $attributes = ['name' => $data['name'], 'konvitte_table_id' => $tableId, 'max_guests' => $data['maxGuests']];
+            if ($guest) {
+                $guest->update($attributes);
+                return;
+            }
+            $guest = $invitation->guests()->create($attributes);
             $base = Str::slug($guest->name) ?: 'guest';
             $slug = $base;
             $counter = 2;
             while (KonvitteGuestSlug::where('slug', $slug)->exists()) $slug = $base . '-' . ($counter++);
             $guest->slug()->create(['slug' => $slug]);
         });
-        return back()->with('success', 'Convidado registado com sucesso.');
+        return back()->with('success', $guest ? 'Convidado atualizado com sucesso.' : 'Convidado registado com sucesso.');
     }
 }

@@ -1,5 +1,5 @@
 import {Head, router, useForm} from '@inertiajs/react';
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {
     Alert,
     AutoComplete,
@@ -18,10 +18,18 @@ import {
     Table as AntTable,
     Typography
 } from 'antd';
-import {PlusOutlined} from '@ant-design/icons';
+import {EditOutlined, PlusOutlined} from '@ant-design/icons';
 import KonvitteGuestLink from './KonvitteGuestLink';
 import {guest as guestRoute} from '@/routes/konvitte';
 
+type Guest = {
+    id: number;
+    name: string;
+    table: string | null;
+    tableId: number | null;
+    maxGuests: number;
+    slug: string | null
+};
 type Invitation = { id: number; name: string; slug: string | null };
 type Table = { id: number; name: string; guestCount: number; capacity: number | null; allocatedSeats: number };
 export type KonvitteManagementProps = {
@@ -29,7 +37,7 @@ export type KonvitteManagementProps = {
     invitations: { id: number; name: string }[];
     tables: Table[];
     guests: {
-        data: { id: number; name: string; table: string | null; maxGuests: number; slug: string | null }[];
+        data: Guest[];
         current_page: number;
         last_page: number;
     };
@@ -48,11 +56,30 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
     const isGuest = section === 'guests';
     const title = isGuest ? 'Convidados' : 'Mesas';
     const [showTableForm, setShowTableForm] = useState(false);
+    const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
+    const guestFormRef = useRef<HTMLDivElement>(null);
     const form = useForm({name: '', tableId: '', tableName: '', tableCapacity: '', maxGuests: '1'});
     const tableForm = useForm({name: '', capacity: ''});
     const selectedTable = tables.find((table) => table.name.toLocaleLowerCase() === form.data.tableName.trim().toLocaleLowerCase());
     const isNewTable = Boolean(form.data.tableName.trim()) && !selectedTable;
     const busy = form.processing || tableForm.processing;
+    const resetGuestForm = () => {
+        setEditingGuest(null);
+        form.reset();
+        form.clearErrors();
+    };
+    const editGuest = (guest: Guest) => {
+        form.clearErrors();
+        form.setData({
+            name: guest.name,
+            tableId: guest.tableId ? String(guest.tableId) : '',
+            tableName: guest.table ?? '',
+            tableCapacity: '',
+            maxGuests: String(guest.maxGuests)
+        });
+        setEditingGuest(guest);
+        guestFormRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    };
     const submitGuest = () => {
         if (!invitation) return;
         form.transform((data) => ({
@@ -61,10 +88,12 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
             tableName: selectedTable ? '' : data.tableName.trim(),
             tableCapacity: isNewTable ? data.tableCapacity : '',
         }));
-        form.post(`/backoffice/konvitte/guests/${invitation.id}`, {
-            preserveScroll: true,
-            onSuccess: () => form.reset(),
-        });
+        const options = {preserveScroll: true, onSuccess: resetGuestForm};
+        if (editingGuest) {
+            form.put(`/backoffice/konvitte/guests/${invitation.id}/${editingGuest.id}`, options);
+        } else {
+            form.post(`/backoffice/konvitte/guests/${invitation.id}`, options);
+        }
     };
     const submitTable = () => {
         if (!invitation) return;
@@ -129,10 +158,11 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                             mesa</Button>
                     </Form>
                 </Card>}
-                {isGuest && <Card title="Registar convidado">
+                {isGuest && <div ref={guestFormRef} style={{scrollMarginTop: 88}}><Card
+                    title={editingGuest ? 'Editar convidado' : 'Registar convidado'}>
                     <Typography.Paragraph>Convite: <Typography.Text
                         strong>{invitation.name}</Typography.Text></Typography.Paragraph>
-                    <Form layout="vertical" fields={guestFields}
+                    <Form key={editingGuest?.id ?? 'new'} layout="vertical" fields={guestFields}
                           onValuesChange={(values) => form.setData({...form.data, ...Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value == null ? '' : String(value)]))})}
                           onFinish={submitGuest} disabled={busy}>
                         <Row gutter={16}>
@@ -164,19 +194,28 @@ function ManagementForm({invitation, invitations, tables, guests, section}: Konv
                                 min={1} max={999} precision={0} style={{width: '100%'}}/></Form.Item></Col>}
                         </Row>
                         <Flex vertical gap="middle">
-                            {selectedTable?.capacity != null && selectedTable.allocatedSeats + Number(form.data.maxGuests) > selectedTable.capacity &&
+                            {selectedTable?.capacity != null && selectedTable.allocatedSeats - (editingGuest?.tableId === selectedTable.id ? editingGuest.maxGuests : 0) + Number(form.data.maxGuests) > selectedTable.capacity &&
                                 <Alert type="warning" showIcon
                                        title="Com este convite, o número de pessoas previsto ultrapassa a capacidade da mesa."/>}
                             <Button type="primary" htmlType="submit" loading={form.processing} block={!screens.sm}
-                                    style={{alignSelf: screens.sm ? 'flex-start' : undefined}}>Registar
-                                convidado</Button>
+                                    style={{alignSelf: screens.sm ? 'flex-start' : undefined}}>{editingGuest ? 'Guardar alterações' : 'Registar convidado'}</Button>
+                            {editingGuest && <Button disabled={busy} onClick={resetGuestForm}>Cancelar edição</Button>}
                         </Flex>
                     </Form>
-                </Card>}
+                </Card></div>}
                 <Card styles={{body: {padding: screens.sm ? 24 : 12, minWidth: 0}}}>
                     {isGuest ? <AntTable rowKey="id" dataSource={guests.data} pagination={false} scroll={{x: 720}}
                                          locale={{emptyText: 'Ainda não existem convidados.'}}
                                          columns={[
+                                             {
+                                                 title: 'Ações',
+                                                 key: 'actions',
+                                                 fixed: 'left',
+                                                 width: 110,
+                                                 render: (_, guest) => <Button icon={<EditOutlined/>} disabled={busy}
+                                                                               onClick={() => editGuest(guest)}
+                                                                               aria-label={`Editar ${guest.name}`}>Editar</Button>
+                                             },
                                              {title: 'Nome', dataIndex: 'name'},
                                              {
                                                  title: 'Mesa',

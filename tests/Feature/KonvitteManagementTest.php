@@ -141,3 +141,36 @@ it('creates only a table and validates capacity before creating records', functi
     $this->post("/backoffice/konvitte/guests/{$invitation->id}", ['name' => 'Ana', 'tableName' => 'Não criar', 'tableCapacity' => 6, 'maxGuests' => 0])->assertSessionHasErrors('maxGuests');
     expect($invitation->tables()->count())->toBe(1)->and($invitation->guests()->count())->toBe(0);
 });
+it('edits a guest without changing its public link and can clear the table', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $table = $invitation->tables()->create(['name' => 'Família', 'capacity' => 8]);
+    $guest = $invitation->guests()->create(['name' => 'Ana', 'max_guests' => 2]);
+    $guest->slug()->create(['slug' => 'ana-original']);
+    $url = "/backoffice/konvitte/guests/{$invitation->id}/{$guest->id}";
+    $this->put($url, ['name' => 'Ana Maria', 'tableId' => $table->id, 'maxGuests' => 4])->assertSessionHasNoErrors()->assertRedirect();
+    expect($guest->fresh()->name)->toBe('Ana Maria')->and($guest->fresh()->max_guests)->toBe(4)
+        ->and($guest->fresh()->konvitte_table_id)->toBe($table->id)->and($guest->fresh()->slug->slug)->toBe('ana-original');
+    $this->get("/backoffice/konvitte/guests/{$invitation->id}")->assertInertia(fn(Assert $page) => $page
+        ->where('guests.data.0.tableId', $table->id)->where('tables.0.allocatedSeats', 4));
+    $this->put($url, ['name' => 'Ana Maria', 'tableId' => null, 'maxGuests' => 1])->assertSessionHasNoErrors();
+    expect($guest->fresh()->konvitte_table_id)->toBeNull()->and($invitation->guests()->count())->toBe(1);
+    $this->put($url, ['name' => 'Ana Maria', 'tableName' => 'Amigos', 'tableCapacity' => 6, 'maxGuests' => 2])->assertSessionHasNoErrors();
+    expect($guest->fresh()->table->name)->toBe('Amigos')->and($guest->fresh()->table->capacity)->toBe(6);
+});
+
+it('rejects guest edits with invalid data or another invitation context', function () {
+    $this->actingAs(konvitteAdmin());
+    $invitation = konvitteManagedInvitation();
+    $other = konvitteManagedInvitation();
+    $table = $other->tables()->create(['name' => 'Outra']);
+    $guest = $invitation->guests()->create(['name' => 'Ana', 'max_guests' => 2]);
+    $payload = ['name' => 'Alterado', 'maxGuests' => 3];
+    $this->put("/backoffice/konvitte/guests/{$other->id}/{$guest->id}", $payload)->assertNotFound();
+    $url = "/backoffice/konvitte/guests/{$invitation->id}/{$guest->id}";
+    $this->put($url, $payload + ['tableId' => $table->id])->assertSessionHasErrors('tableId');
+    $this->put($url, ['name' => '', 'maxGuests' => 0, 'tableName' => 'Não criar'])->assertSessionHasErrors(['name', 'maxGuests']);
+    expect($guest->fresh()->name)->toBe('Ana')->and($guest->fresh()->max_guests)->toBe(2)->and($invitation->tables()->count())->toBe(0);
+    $this->actingAs(User::factory()->create())->put($url, $payload)->assertForbidden();
+    expect($guest->fresh()->name)->toBe('Ana');
+});

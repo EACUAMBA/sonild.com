@@ -41,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/konvitte/tables/{invitation}', [KonvitteManagementController::class, 'storeTable'])->name('konvitte.tables.store');
         Route::get('/konvitte/guests/{invitation?}', [KonvitteManagementController::class, 'guests'])->name('konvitte.guests.index');
         Route::post('/konvitte/guests/{invitation}', [KonvitteManagementController::class, 'storeGuest'])->name('konvitte.guests.store');
+        Route::put('/konvitte/guests/{invitation}/{guest}', [KonvitteManagementController::class, 'updateGuest'])->name('konvitte.guests.update');
         Route::get('/konvitte/convite/{invitation?}', [KonvitteInvitationController::class, 'edit'])->name('konvitte.convite');
         Route::post('/konvitte/convite/{invitation?}', [KonvitteInvitationController::class, 'save'])->name('konvitte.convite.save');
         Route::post('/konvitte/convite/{invitation}/mesas', [KonvitteInvitationController::class, 'storeLegacyTable'])->name('konvitte.convite.mesas.store');
