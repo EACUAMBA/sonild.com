@@ -1,10 +1,26 @@
-import {useForm} from '@inertiajs/react';
+import {router, useForm} from '@inertiajs/react';
 import {Heart, MessageCircle, Send} from 'lucide-react';
 import {type FormEvent, useState} from 'react';
 
-export type GuestMessage = { id: number; text: string; sentAt: string };
+export type GuestMessage = {
+    id: number;
+    text: string | null;
+    sentAt: string;
+    hiddenByGuest: boolean;
+    hiddenByAdmin: boolean
+};
 
 export default function PublicMessages({url, messages}: { url: string | null; messages: GuestMessage[] }) {
+    const [busy, setBusy] = useState(false);
+    const [visibilityError, setVisibilityError] = useState(false);
+    const toggleVisibility = (message: GuestMessage) => {
+        if (!url || busy) return;
+        setBusy(true);
+        setVisibilityError(false);
+        router.patch(`${url}/${message.id}/visibility`, {hidden: !message.hiddenByGuest}, {
+            preserveScroll: true, onError: () => setVisibilityError(true), onFinish: () => setBusy(false),
+        });
+    };
     const form = useForm({text: ''});
     const [saved, setSaved] = useState(false);
     const submit = (event: FormEvent) => {
@@ -42,14 +58,20 @@ export default function PublicMessages({url, messages}: { url: string | null; me
                     <Send size={16}/>{form.processing ? 'A enviar…' : 'Enviar mensagem'}</button>
             </form>
             <h3>As suas mensagens anteriores</h3>
+            {visibilityError && <p role="alert">Não foi possível alterar a visibilidade. Tente novamente.</p>}
             {messages.length ? <div className="messages-list">{messages.map((message) => <article key={message.id}>
                 <Heart size={15} aria-hidden="true"/><p
-                style={{whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'}}>{message.text}</p>
+                style={{whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'}}>{message.text ?? 'Mensagem oculta'}</p>
                 <time dateTime={message.sentAt}>{new Intl.DateTimeFormat('pt-PT', {
                     dateStyle: 'medium',
                     timeStyle: 'short',
                     timeZone: 'Africa/Maputo'
                 }).format(new Date(message.sentAt))}</time>
+                <div style={{marginTop: 12}}>
+                    {message.hiddenByAdmin ? <small>Ocultada pelo gestor do convite.</small> :
+                        <button type="button" className="invitation-button invitation-button-outline" disabled={busy}
+                                onClick={() => toggleVisibility(message)}>{message.hiddenByGuest ? 'Mostrar novamente' : 'Ocultar mensagem'}</button>}
+                </div>
             </article>)}</div> : <p>Ainda não enviou mensagens.</p>}
         </> : <p>Para enviar e consultar as suas mensagens, abra a ligação pessoal do seu convite.</p>}
     </section>;

@@ -209,9 +209,8 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                     <div className="wedding-date"><span>{monthLabel}</span><span
                         className="date-star">✳</span><strong>{dayNumber}</strong><span
                         className="date-star">✳</span><span>{yearLabel}</span></div>
-                    <p className="wedding-day">{invitation.dayLabel}</p><p
-                        className="bible-quote">{invitation.bible}<small>{invitation.bibleReference}</small></p><p
-                        className="invitation-label">Cordialmente convidam</p><h2
+                    <p className="wedding-day">{invitation.dayLabel}</p>
+                    <p className="invitation-label">Cordialmente convidam</p><h2
                         className="guest-name">{invitation.guest}</h2>
                     <button className="open-invitation" onClick={openInvitation}><MailOpen
                         size={17}/> Abrir <ChevronRight size={17}/></button>

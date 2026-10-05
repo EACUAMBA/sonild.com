@@ -74,3 +74,41 @@ it('deletes dependent messages with guests and invitations', function () {
     $this->invite->delete();
     expect(KonvitteMessage::count())->toBe(0);
 });
+
+
+it('lets only the author hide their message and preserves moderator restrictions', function () {
+    $message = $this->invite->messages()->create(['konvitte_guest_id' => $this->guest->id, 'text' => 'Segredo']);
+    $url = $this->url . '/' . $message->id . '/visibility';
+    $this->patch($url, ['hidden' => true])->assertRedirect();
+    expect($message->fresh()->hidden_by_guest)->toBeTrue()->and($message->fresh()->text)->toBe('Segredo');
+    $this->get('/konvitte/messages-wedding/maria-messages')->assertInertia(fn($page) => $page->where('invitationData.messages.0.text', null));
+    $other = $this->invite->guests()->create(['name' => 'Outro', 'max_guests' => 1]);
+    $other->slug()->create(['slug' => 'other-author']);
+    $this->patch('/konvitte/messages-wedding/other-author/messages/' . $message->id . '/visibility', ['hidden' => false])->assertNotFound();
+    $message->update(['hidden_by_admin' => true]);
+    $this->patch($url, ['hidden' => false, 'hidden_by_admin' => false])->assertRedirect();
+    $this->get('/konvitte/messages-wedding/maria-messages')->assertInertia(fn($page) => $page
+        ->where('invitationData.messages.0.text', null)->where('invitationData.messages.0.hiddenByAdmin', true));
+    $message->update(['hidden_by_admin' => false]);
+    $this->get('/konvitte/messages-wedding/maria-messages')->assertInertia(fn($page) => $page->where('invitationData.messages.0.text', 'Segredo'));
+    $this->patch($url, ['hidden' => 'invalid'])->assertSessionHasErrors('hidden');
+});
+
+it('authorizes moderator visibility changes and scopes them to the invitation', function () {
+    $message = $this->invite->messages()->create(['konvitte_guest_id' => $this->guest->id, 'text' => 'Olá']);
+    $url = '/backoffice/konvitte/messages/' . $this->invite->id . '/' . $message->id . '/visibility';
+    $this->actingAs(User::factory()->create())->patch($url, ['hidden' => true])->assertForbidden();
+    $user = User::factory()->create();
+    $group = UserGroup::create(['name' => 'Moderators']);
+    $permission = Permission::create(['name' => 'Moderate', 'scope' => 'backoffice', 'module' => 'ACL', 'resource' => 'user', 'action' => 'view']);
+    $group->permissions()->attach($permission);
+    $user->userGroups()->attach($group);
+    $this->actingAs($user)->patch($url, ['hidden' => true])->assertRedirect();
+    expect($message->fresh()->hidden_by_admin)->toBeTrue();
+    $this->get('/backoffice/konvitte/messages/' . $this->invite->id)->assertInertia(fn($page) => $page->where('messages.data.0.text', null));
+    $other = $this->invite->replicate();
+    $other->save();
+    $this->patch('/backoffice/konvitte/messages/' . $other->id . '/' . $message->id . '/visibility', ['hidden' => false])->assertNotFound();
+    $this->patch($url, ['hidden' => false])->assertRedirect();
+    expect($message->fresh()->hidden_by_admin)->toBeFalse();
+});

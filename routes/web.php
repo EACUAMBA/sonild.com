@@ -13,6 +13,7 @@ Route::inertia('/', 'welcome')->name('home');
 Route::get('konvitte/{slug}/{guestSlug?}', [PublicKonvitteInvitationController::class, 'show'])->name('konvitte.guest');
 Route::post('konvitte/{slug}/{guestSlug}/rsvp', [PublicKonvitteInvitationController::class, 'storeRsvp'])->name('konvitte.rsvp.store');
 
+Route::patch('konvitte/{slug}/{guestSlug}/messages/{message}/visibility', [PublicKonvitteInvitationController::class, 'setMessageVisibility'])->middleware('throttle:30,1')->name('konvitte.messages.visibility');
 Route::post('konvitte/{slug}/{guestSlug}/messages', [PublicKonvitteInvitationController::class, 'storeMessage'])->middleware('throttle:10,1')->name('konvitte.messages.store');
 
 Route::get('email/verify', fn() => redirect(
@@ -45,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/konvitte/tables/{invitation?}', [KonvitteManagementController::class, 'tables'])->name('konvitte.tables.index');
         Route::post('/konvitte/tables/{invitation}', [KonvitteManagementController::class, 'storeTable'])->name('konvitte.tables.store');
         Route::put('/konvitte/tables/{invitation}/{table}', [KonvitteManagementController::class, 'updateTable'])->name('konvitte.tables.update');
+        Route::patch('/konvitte/messages/{invitation}/{message}/visibility', [\App\Http\Controllers\Backoffice\Konvitte\KonvitteMessageController::class, 'setVisibility'])->name('konvitte.messages.visibility');
         Route::get('/konvitte/messages/{invitation?}', [\App\Http\Controllers\Backoffice\Konvitte\KonvitteMessageController::class, 'index'])->name('konvitte.messages.index');
         Route::get('/konvitte/rsvps/{invitation?}', [KonvitteRsvpController::class, 'index'])->name('konvitte.rsvps.index');
         Route::get('/konvitte/guests/{invitation?}', [KonvitteManagementController::class, 'guests'])->name('konvitte.guests.index');

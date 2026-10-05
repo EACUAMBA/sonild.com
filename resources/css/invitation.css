@@ -1553,3 +1553,152 @@
         padding-block: 82px;
     }
 }
+
+/* Cover polish: make the first impression calmer, brighter and more intentional. */
+.invitation-cover-stage {
+    isolation: isolate;
+    background-position: center 42%;
+}
+
+.invitation-cover-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(180deg, #101a1266 0%, transparent 28%, #101a12b8 100%),
+    radial-gradient(ellipse at center, transparent 28%, #101a126e 100%);
+}
+
+.invitation-cover-stage .invitation-frame {
+    inset: 24px 4.5%;
+    border-color: #fff8dfb3;
+    box-shadow: inset 0 0 50px #fff8df0c;
+}
+
+.invitation-cover-stage .invitation-frame::before,
+.invitation-cover-stage .invitation-frame::after {
+    content: '';
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-color: #f6e8bdb3;
+}
+
+.invitation-cover-stage .invitation-frame::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+}
+
+.invitation-cover-stage .invitation-frame::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 2px solid;
+    border-bottom: 2px solid;
+    inset: auto -1px -1px auto;
+}
+
+.invitation-cover-stage .invitation-content {
+    overflow: hidden;
+    padding: 54px 42px 42px;
+    border-color: #fff8df8c;
+    background: linear-gradient(145deg, #fffaf038, #fffaf00d 72%);
+}
+
+.invitation-cover-stage .invitation-content::after {
+    content: '✦';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    color: #f6e8bdb3;
+    font-size: 13px;
+    transform: translateX(-50%);
+}
+
+.invitation-cover-stage .save-the-date {
+    margin-bottom: 24px;
+    color: #fff8df;
+    font-weight: 600;
+    text-shadow: 0 2px 14px #172011cc;
+}
+
+.invitation-cover-stage h1 {
+    margin-top: 18px;
+    font-size: clamp(78px, 10vw, 138px);
+    line-height: .98;
+    text-shadow: 0 4px 30px #172011dd;
+}
+
+.invitation-cover-stage .wedding-date {
+    margin-top: 24px;
+    padding: 12px 18px;
+    border-block: 1px solid #f6e8bd66;
+    font-size: 20px;
+}
+
+.invitation-cover-stage .wedding-date strong {
+    font-size: 50px;
+}
+
+.invitation-cover-stage .bible-quote {
+    margin-top: 32px;
+    color: #fffdf3;
+}
+
+.invitation-cover-stage .invitation-label {
+    margin-top: 28px;
+}
+
+.invitation-cover-stage .guest-name {
+    margin-bottom: 28px;
+    text-shadow: 0 3px 24px #172011dd;
+}
+
+.invitation-cover-stage .open-invitation {
+    min-width: 168px;
+    padding-block: 15px;
+    border-color: #d7c286;
+    background: linear-gradient(135deg, #b39a5f, #806b3c);
+    box-shadow: 0 10px 26px #17201166, inset 0 1px #fff8df66;
+}
+
+.invitation-cover-stage .open-invitation:hover {
+    background: linear-gradient(135deg, #c3aa6d, #90784a);
+    box-shadow: 0 14px 32px #17201180, inset 0 1px #fff8df80;
+}
+
+.invitation-cover-stage .flowers-left,
+.invitation-cover-stage .flowers-right {
+    opacity: .78;
+    filter: drop-shadow(0 10px 18px #17201155);
+}
+
+@media (max-width: 640px) {
+    .invitation-cover-stage {
+        background-position: 58% center;
+    }
+
+    .invitation-cover-stage .invitation-frame {
+        inset: 16px 12px;
+    }
+
+    .invitation-cover-stage .invitation-content {
+        padding: 44px 20px 32px;
+    }
+
+    .invitation-cover-stage h1 {
+        font-size: clamp(68px, 19vw, 96px);
+    }
+
+    .invitation-cover-stage .wedding-date {
+        gap: 10px;
+        padding-inline: 8px;
+        font-size: 17px;
+    }
+
+    .invitation-cover-stage .wedding-date strong {
+        font-size: 42px;
+    }
+}

@@ -12,6 +12,16 @@ use Inertia\Response;
 
 class PublicKonvitteInvitationController extends Controller
 {
+    public function setMessageVisibility(Request $request, string $slug, string $guestSlug, int $message): RedirectResponse
+    {
+        $invitation = KonvitteInvitationSlug::where('slug', $slug)->firstOrFail()->invitation;
+        $guest = $invitation->guests()->whereHas('slug', fn($query) => $query->where('slug', $guestSlug))->firstOrFail();
+        $record = $invitation->messages()->where('konvitte_guest_id', $guest->id)->findOrFail($message);
+        $data = $request->validate(['hidden' => ['required', 'boolean']]);
+        $record->update(['hidden_by_guest' => $data['hidden']]);
+        return to_route('konvitte.guest', ['slug' => $slug, 'guestSlug' => $guestSlug]);
+    }
+
     public function storeMessage(Request $request, string $slug, string $guestSlug): RedirectResponse
     {
         $invitation = KonvitteInvitationSlug::where('slug', $slug)->firstOrFail()->invitation;
@@ -56,7 +66,8 @@ class PublicKonvitteInvitationController extends Controller
             'invitationData' => [
                 'messagesUrl' => $guest ? route('konvitte.messages.store', ['slug' => $slug, 'guestSlug' => $guestSlug], false) : null,
                 'messages' => $guest ? $invitation->messages()->where('konvitte_guest_id', $guest->id)->latest('id')->get()->map(fn($message) => [
-                    'id' => $message->id, 'text' => $message->text, 'sentAt' => $message->created_at->toIso8601String(),
+                    'id' => $message->id, 'text' => ($message->hidden_by_guest || $message->hidden_by_admin) ? null : $message->text,
+                    'hiddenByGuest' => $message->hidden_by_guest, 'hiddenByAdmin' => $message->hidden_by_admin, 'sentAt' => $message->created_at->toIso8601String(),
                 ])->values() : [],
                 'rsvpEnabled' => $invitation->rsvp_enabled,
                 'rsvpUrl' => $guest && $invitation->rsvp_enabled ? route('konvitte.rsvp.store', ['slug' => $slug, 'guestSlug' => $guestSlug], false) : null,

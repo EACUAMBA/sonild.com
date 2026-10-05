@@ -1,11 +1,19 @@
 import {Head, router} from '@inertiajs/react';
-import {Card, Empty, Flex, Form, Input, Select, Table, Typography} from 'antd';
+import {useState} from 'react';
+import {Button, Card, Empty, Flex, Form, Input, Select, Table, Tag, Typography} from 'antd';
 
 type Props = {
     invitation: { id: number; name: string } | null;
     invitations: { id: number; name: string }[];
     messages: {
-        data: { id: number; guest: string; text: string; sentAt: string }[];
+        data: {
+            id: number;
+            guest: string;
+            text: string | null;
+            sentAt: string;
+            hiddenByGuest: boolean;
+            hiddenByAdmin: boolean
+        }[];
         current_page: number;
         total: number
     };
@@ -13,6 +21,16 @@ type Props = {
 };
 
 export default function KonvitteMessages({invitation, invitations, messages, search}: Props) {
+    const [busy, setBusy] = useState(false);
+    const [visibilityError, setVisibilityError] = useState(false);
+    const toggleVisibility = (message: Props['messages']['data'][number]) => {
+        if (!invitation || busy) return;
+        setBusy(true);
+        setVisibilityError(false);
+        router.patch(`/backoffice/konvitte/messages/${invitation.id}/${message.id}/visibility`, {hidden: !message.hiddenByAdmin}, {
+            preserveScroll: true, onError: () => setVisibilityError(true), onFinish: () => setBusy(false),
+        });
+    };
     const visit = (page: number, query = search) => {
         if (invitation) router.get(`/backoffice/konvitte/messages/${invitation.id}`, {
             page,
@@ -38,6 +56,7 @@ export default function KonvitteMessages({invitation, invitations, messages, sea
                                                                                     onSearch={(value) => visit(1, value.trim())}/></Form.Item>}
             </Form></Card>
             <Card title={invitation ? `Mensagens · ${invitation.name}` : 'Mensagens dos convidados'}>
+                {visibilityError && <p role="alert">Não foi possível alterar a visibilidade. Tente novamente.</p>}
                 <Table rowKey="id" dataSource={messages.data} scroll={{x: 650}}
                        locale={{
                            emptyText: <Empty
@@ -48,12 +67,29 @@ export default function KonvitteMessages({invitation, invitations, messages, sea
                            showTotal: (total) => `${total} mensagem(ns)`, onChange: (page) => visit(page)
                        }}
                        columns={[
+                           {
+                               title: 'Visibilidade',
+                               width: 170,
+                               render: (_, message) =>
+                                   <Tag>{message.hiddenByGuest ? 'Oculta pelo convidado' : message.hiddenByAdmin ? 'Oculta pelo gestor' : 'Visível'}</Tag>
+                           },
+                           {
+                               title: 'Ações',
+                               width: 170,
+                               render: (_, message) => <Button
+                                   disabled={busy || (message.hiddenByGuest && !message.hiddenByAdmin)}
+                                   onClick={() => toggleVisibility(message)}>{message.hiddenByAdmin ? 'Desfazer ocultação' : 'Ocultar'}</Button>
+                           },
                            {title: 'Convidado', dataIndex: 'guest', width: 180},
                            {
                                title: 'Mensagem',
                                dataIndex: 'text',
-                               render: (text: string) => <p
-                                   style={{whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', margin: 0}}>{text}</p>
+                               render: (text: string | null) => <p
+                                   style={{
+                                       whiteSpace: 'pre-wrap',
+                                       overflowWrap: 'anywhere',
+                                       margin: 0
+                                   }}>{text ?? 'Mensagem oculta'}</p>
                            },
                            {
                                title: 'Enviada em',
