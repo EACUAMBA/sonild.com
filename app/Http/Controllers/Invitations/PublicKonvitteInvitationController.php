@@ -65,8 +65,11 @@ class PublicKonvitteInvitationController extends Controller
         return Inertia::render('welcome', [
             'invitationData' => [
                 'messagesUrl' => $guest ? route('konvitte.messages.store', ['slug' => $slug, 'guestSlug' => $guestSlug], false) : null,
-                'messages' => $guest ? $invitation->messages()->where('konvitte_guest_id', $guest->id)->latest('id')->get()->map(fn($message) => [
-                    'id' => $message->id, 'text' => ($message->hidden_by_guest || $message->hidden_by_admin) ? null : $message->text,
+                'messages' => $guest ? $invitation->messages()->with('guest:id,name')
+                    ->where(fn($query) => $query->where(fn($visible) => $visible->where('hidden_by_guest', false)->where('hidden_by_admin', false))
+                        ->orWhere('konvitte_guest_id', $guest->id))
+                    ->latest('id')->get()->map(fn($message) => [
+                        'id' => $message->id, 'author' => $message->guest->name, 'isOwn' => $message->konvitte_guest_id === $guest->id, 'text' => ($message->hidden_by_guest || $message->hidden_by_admin) ? null : $message->text,
                     'hiddenByGuest' => $message->hidden_by_guest, 'hiddenByAdmin' => $message->hidden_by_admin, 'sentAt' => $message->created_at->toIso8601String(),
                 ])->values() : [],
                 'rsvpEnabled' => $invitation->rsvp_enabled,

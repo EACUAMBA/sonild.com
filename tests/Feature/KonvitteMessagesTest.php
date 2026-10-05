@@ -17,17 +17,19 @@ beforeEach(function () {
     $this->url = '/konvitte/messages-wedding/maria-messages/messages';
 });
 
-it('stores multiple messages and returns only the personal history', function () {
+it('shares visible messages with guests of the same invitation', function () {
     $other = $this->invite->guests()->create(['name' => 'Pedro', 'max_guests' => 1]);
-    $this->invite->messages()->create(['konvitte_guest_id' => $other->id, 'text' => 'Privada']);
+    $this->invite->messages()->create(['konvitte_guest_id' => $other->id, 'text' => 'Parabéns!']);
     foreach (['Felicidades!', 'Até breve!'] as $text) {
         $this->post($this->url, ['text' => $text, 'konvitte_guest_id' => $other->id, 'konvitte_invitation_id' => 999])
             ->assertSessionHasNoErrors()->assertRedirect('/konvitte/messages-wedding/maria-messages');
     }
     expect($this->guest->messages()->count())->toBe(2);
     $this->get('/konvitte/messages-wedding/maria-messages')->assertOk()->assertInertia(fn($page) => $page
-        ->where('invitationData.messagesUrl', $this->url)->has('invitationData.messages', 2)
-        ->where('invitationData.messages.0.text', 'Até breve!'));
+        ->where('invitationData.messagesUrl', $this->url)->has('invitationData.messages', 3)
+        ->where('invitationData.messages.0.text', 'Até breve!')
+        ->where('invitationData.messages.0.isOwn', true)
+        ->where('invitationData.messages.2.author', 'Pedro')->where('invitationData.messages.2.isOwn', false));
     $this->get('/konvitte/messages-wedding')->assertOk()->assertInertia(fn($page) => $page
         ->where('invitationData.messagesUrl', null)->has('invitationData.messages', 0));
 });
@@ -111,4 +113,20 @@ it('authorizes moderator visibility changes and scopes them to the invitation', 
     $this->patch('/backoffice/konvitte/messages/' . $other->id . '/' . $message->id . '/visibility', ['hidden' => false])->assertNotFound();
     $this->patch($url, ['hidden' => false])->assertRedirect();
     expect($message->fresh()->hidden_by_admin)->toBeFalse();
+});
+
+
+it('keeps hidden messages and other invitations out of the shared feed', function () {
+    $other = $this->invite->guests()->create(['name' => 'Pedro', 'max_guests' => 1]);
+    foreach (['hidden_by_guest', 'hidden_by_admin'] as $flag) {
+        $this->invite->messages()->create(['konvitte_guest_id' => $other->id, 'text' => 'Oculta', $flag => true]);
+    }
+    $this->invite->messages()->create(['konvitte_guest_id' => $other->id, 'text' => 'Pública']);
+    $separate = $this->invite->replicate();
+    $separate->save();
+    $guest = $separate->guests()->create(['name' => 'Outro evento', 'max_guests' => 1]);
+    $separate->messages()->create(['konvitte_guest_id' => $guest->id, 'text' => 'Outro evento']);
+    $this->get('/konvitte/messages-wedding/maria-messages')->assertOk()->assertInertia(fn($page) => $page
+        ->has('invitationData.messages', 1)->where('invitationData.messages.0.text', 'Pública')
+        ->where('invitationData.messages.0.author', 'Pedro')->where('invitationData.messages.0.isOwn', false));
 });
