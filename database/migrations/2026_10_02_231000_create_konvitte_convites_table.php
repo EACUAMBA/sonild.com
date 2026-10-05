@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->string('musica')->nullable();
             $table->text('texto_casal')->nullable();
             $table->string('foto_informacoes')->nullable();
-            $table->text('texto_celebre')->default('Com a bênção de Deus e dos nossos pais, ');
+            $table->text('texto_celebre')->nullable();
             $table->text('texto_orientacoes')->nullable();
             $table->timestamps();
         });
