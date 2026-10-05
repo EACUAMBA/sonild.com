@@ -140,6 +140,20 @@ function Countdown({date}: { date: string }) {
     </div>)}</div>;
 }
 
+function InvitationDate({weekday, day, month, year, cover = false}: {
+    weekday: string; day: string; month: string; year: string; cover?: boolean;
+}) {
+    return <div className={`invitation-date-display${cover ? ' invitation-date-display-cover' : ''}`}
+                aria-label={`${weekday}, ${day} de ${month} de ${year}`}>
+        <div className="invitation-date-row" aria-hidden="true">
+            <span className="invitation-date-weekday">{weekday}</span>
+            <strong className="invitation-date-number">{day}</strong>
+            <span className="invitation-date-month">{month}</span>
+        </div>
+        <span className="invitation-date-year" aria-hidden="true">{year}</span>
+    </div>;
+}
+
 function CalendarButton({invitation}: { invitation: InvitationData }) {
     const icsDate = new Date(invitation.date).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
     const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Sonild Eventtu//Wedding//PT\nBEGIN:VEVENT\nDTSTART:${icsDate}\nSUMMARY:Casamento de ${invitation.groom} e ${invitation.bride}\nLOCATION:${invitation.venue}, ${invitation.address}\nEND:VEVENT\nEND:VCALENDAR`;
@@ -206,10 +220,8 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                 <div className="invitation-content"><p className="save-the-date"><Sparkles size={13}/> Save the date</p>
                     <div className="invitation-eyebrow"><span/> UM AMOR, UMA VIDA <span/></div>
                     <h1>{invitation.groom} <span>&amp;</span> {invitation.bride}</h1>
-                    <div className="wedding-date"><span>{monthLabel}</span><span
-                        className="date-star">✳</span><strong>{dayNumber}</strong><span
-                        className="date-star">✳</span><span>{yearLabel}</span></div>
-                    <p className="wedding-day">{invitation.dayLabel}</p>
+                    <InvitationDate weekday={invitation.dayLabel} day={dayNumber} month={monthLabel} year={yearLabel}
+                                    cover/>
                     <p className="invitation-label">Cordialmente convidam</p><h2
                         className="guest-name">{invitation.guest}</h2>
                     <button className="open-invitation" onClick={openInvitation}><MailOpen
@@ -272,9 +284,8 @@ export default function Welcome({invitationData}: { invitationData?: InvitationD
                                                                                      title="A nossa data"
                                                                                      icon={<CalendarDays
                                                                                          className="section-icon"/>}/>
-                    <div className="big-date">
-                        <span>{monthLabel}</span><strong>{dayNumber}</strong><span>{yearLabel}</span></div>
-                    <p className="wedding-day">{invitation.dayLabel}</p><p>{invitation.venue}<br/>{invitation.address}
+                    <InvitationDate weekday={invitation.dayLabel} day={dayNumber} month={monthLabel} year={yearLabel}/>
+                    <p>{invitation.venue}<br/>{invitation.address}
                     </p><CalendarButton invitation={invitation}/></section>
                 <section className="invitation-section schedule-section"><SectionHeading eyebrow="O programa"
                                                                                          title="Um dia para recordar"/>
