@@ -1,0 +1,18 @@
+services:
+    app:
+        build: .
+        container_name: sonild-app
+        restart: unless-stopped
+
+        env_file:
+            - /opt/apps/sonild/.env
+
+        ports:
+            - "127.0.0.1:8100:8000"
+
+        networks:
+            - sonild-network
+
+networks:
+    sonild-network:
+        external: true
