@@ -1,38 +1,42 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { home } from '@/routes';
-import type { AuthLayoutProps } from '@/types';
+import {Link} from '@inertiajs/react';
+import {ArrowLeft, CalendarDays, Layers3, Mail, ShieldCheck} from 'lucide-react';
+import {home} from '@/routes';
+import type {AuthLayoutProps} from '@/types';
+import '../../../css/auth.css';
 
-export default function AuthSimpleLayout({
-    children,
-    title,
-    description,
-}: AuthLayoutProps) {
-    return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
-
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
+export default function AuthSimpleLayout({children, title, description}: AuthLayoutProps) {
+    return <div className="sonild-auth">
+        <aside className="sonild-auth-panel">
+            <Link href={home()} className="sonild-auth-brand" aria-label="Sonild, página inicial"><span
+                className="sonild-auth-mark"><Layers3 size={24}/></span>sonild<span
+                className="sonild-auth-platform">PLATAFORMA</span></Link>
+            <div className="sonild-auth-presentation"><span
+                className="sonild-auth-eyebrow">O SEU ESPAÇO DE GESTÃO</span>
+                <h2>Tudo preparado.<br/><span>Para o próximo<br/>grande momento.</span></h2>
+                <p>Os seus eventos, convites e convidados. Organizados num só lugar.</p>
+                <div className="sonild-auth-products">
+                    <div><Mail
+                        size={21}/><span><strong>Konvitte</strong><small>Convites digitais e convidados</small></span>
                     </div>
-                    {children}
+                    <div><CalendarDays
+                        size={21}/><span><strong>Eventtu</strong><small>Organização e gestão de eventos</small></span>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+            <p className="sonild-auth-panel-footer">Tecnologia para aproximar pessoas.</p>
+        </aside>
+        <main className="sonild-auth-main">
+            <Link href={home()} className="sonild-auth-back"><ArrowLeft size={16}/> Voltar ao site</Link>
+            <div className="sonild-auth-card">
+                <div className="sonild-auth-mobile-brand">sonild<span> / PLATAFORMA</span></div>
+                <div className="sonild-auth-heading"><span className="sonild-auth-lock"><ShieldCheck size={25}/></span>
+                    <p>ÁREA RESERVADA</p><h1>{title}</h1><span>{description}</span></div>
+                {children}
+                <div className="sonild-auth-help"><ShieldCheck
+                    size={16}/><span>Acesso reservado à sua conta Sonild.</span></div>
+            </div>
+            <footer className="sonild-auth-footer">© {new Date().getFullYear()} Sonild <span>Konvitte · Eventtu</span>
+            </footer>
+        </main>
+    </div>;
 }

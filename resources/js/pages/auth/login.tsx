@@ -1,14 +1,14 @@
-import { Form, Head } from '@inertiajs/react';
+import {Form, Head} from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { store } from '@/routes/login';
-import { request } from '@/routes/password';
+import {Button} from '@/components/ui/button';
+import {Checkbox} from '@/components/ui/checkbox';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Spinner} from '@/components/ui/spinner';
+import {store} from '@/routes/login';
+import {request} from '@/routes/password';
 
 type Props = {
     status?: string;
@@ -18,7 +18,7 @@ type Props = {
 export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
-            <Head title="Log in" />
+            <Head title="Entrar na Sonild"/>
 
             <Form
                 {...store.form()}
@@ -29,7 +29,7 @@ export default function Login({ status, canResetPassword }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Endereço de email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -38,21 +38,21 @@ export default function Login({ status, canResetPassword }: Props) {
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="email@example.com"
+                                    placeholder="nome@exemplo.com"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">Palavra-passe</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
                                             tabIndex={5}
                                         >
-                                            Forgot your password?
+                                            Esqueceu a palavra-passe?
                                         </TextLink>
                                     )}
                                 </div>
@@ -62,7 +62,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Password"
+                                    placeholder="Introduza a sua palavra-passe"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -73,7 +73,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember">Manter sessão iniciada</Label>
                             </div>
 
                             <Button
@@ -84,7 +84,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
+                                {processing ? 'A entrar…' : 'Entrar na plataforma'}
                             </Button>
                         </div>
                     </>
@@ -92,7 +92,7 @@ export default function Login({ status, canResetPassword }: Props) {
             </Form>
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div role="status" className="sonild-auth-status">
                     {status}
                 </div>
             )}
@@ -101,6 +101,6 @@ export default function Login({ status, canResetPassword }: Props) {
 }
 
 Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    title: 'Bem-vindo à Sonild',
+    description: 'Entre na sua conta para gerir os seus eventos e convites.',
 };
