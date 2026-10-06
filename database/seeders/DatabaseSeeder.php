@@ -21,11 +21,10 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@sonild.com',
         ], [
             'name' => 'Administrator',
-            'password' => 'password',
+            'password' => bcrypt('25vco1l22DqOs9uBdluM'),
             'email_verified_at' => now(),
         ]);
 
         $this->call(AdministratorGroupSeeder::class);
-        $this->call(CasamentoVictoriaManecasSeeder::class);
     }
 }
