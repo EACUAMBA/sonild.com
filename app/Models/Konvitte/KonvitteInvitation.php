@@ -14,6 +14,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class KonvitteInvitation extends Model
 {
 
+    public function scopeManagedBy($query, ?\App\Models\User $user)
+    {
+        if ($user?->hasModulePermission('backoffice', 'ACL')) return $query;
+        return $user ? $query->where('user_id', $user->id) : $query->whereRaw('1 = 0');
+    }
+
+    public function resolveRouteBindingQuery($query, $value, $field = null)
+    {
+        abort_unless(request()->user()?->canManageKonvitte(), 403);
+        return parent::resolveRouteBindingQuery($query, $value, $field)->managedBy(request()->user());
+    }
+
     public function inviteType(): BelongsTo
     {
         return $this->belongsTo(KonvitteInviteType::class, 'konvitte_invite_type_id');

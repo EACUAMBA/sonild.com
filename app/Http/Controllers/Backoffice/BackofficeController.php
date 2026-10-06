@@ -14,8 +14,9 @@ use Inertia\Response;
 
 class BackofficeController extends Controller
 {
-    public function dashboard(): Response
+    public function dashboard(): Response|RedirectResponse
     {
+        if (!request()->user()->hasModulePermission('backoffice', 'ACL') && request()->user()->canManageKonvitte()) return to_route('backoffice.konvitte.invitations.index');
         $this->ensureAccess();
         return Inertia::render('backoffice/Dashboard', [
             'stats' => [

@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Filament\Auth\Notifications\VerifyEmail;
-use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -51,7 +49,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->hasModulePermission('backoffice', 'ACL');
+    }
+
+    public function canManageKonvitte(): bool
+    {
+        return $this->hasModulePermission('backoffice', 'ACL') || $this->hasPermission('konvitte', 'Konvitte', 'invitation', 'manage');
     }
 
     public function hasPermission(string $scope, string $module, string $resource, string $action): bool
@@ -71,10 +74,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function sendEmailVerificationNotification(): void
     {
-        $notification = app(VerifyEmail::class);
-        $notification->url = Filament::getPanel('backoffice')->getVerifyEmailUrl($this);
-
-        $this->notifyNow($notification);
+        $this->notify(new \App\Notifications\VerifySonildEmail());
     }
 
     /** @return BelongsToMany<UserGroup, $this> */

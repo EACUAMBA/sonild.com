@@ -12,8 +12,8 @@ class KonvitteRsvpController extends Controller
 {
     public function index(Request $request, ?KonvitteInvitation $invitation = null): Response
     {
-        abort_unless($request->user()?->hasModulePermission('backoffice', 'ACL'), 403);
-        $invitation ??= KonvitteInvitation::latest('id')->first();
+        abort_unless($request->user()?->canManageKonvitte(), 403);
+        $invitation ??= KonvitteInvitation::managedBy(request()->user())->latest('id')->first();
         $status = $request->query('status');
         $search = $request->query('search', '');
         abort_unless($status === null || in_array($status, ['CONFIRMED', 'DECLINED', 'PENDING', 'UNANSWERED'], true), 400);
@@ -45,7 +45,7 @@ class KonvitteRsvpController extends Controller
 
         return Inertia::render('backoffice/Konvitte/KonvitteRsvps', [
             'invitation' => $invitation ? ['id' => $invitation->id, 'name' => $invitation->groom_name . ' & ' . $invitation->bride_name] : null,
-            'invitations' => KonvitteInvitation::latest('id')->get()->map(fn($item) => ['id' => $item->id, 'name' => $item->groom_name . ' & ' . $item->bride_name]),
+            'invitations' => KonvitteInvitation::managedBy(request()->user())->latest('id')->get()->map(fn($item) => ['id' => $item->id, 'name' => $item->groom_name . ' & ' . $item->bride_name]),
             'summary' => $summary,
             'responses' => $responses,
             'filters' => ['status' => $status, 'search' => $search],

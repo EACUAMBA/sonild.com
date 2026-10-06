@@ -58,6 +58,7 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
             }]
         },
     ];
+    const visibleItems = items.filter((item) => item.key === 'konvitte' ? page.props.auth.canKonvitte : page.props.auth.canAdmin);
     const routes = ['/backoffice/konvitte/messages', '/backoffice/konvitte/rsvps', '/backoffice/konvitte/invitations', '/backoffice/konvitte/tables', '/backoffice/konvitte/guests', '/backoffice/eventtu/eventos', '/backoffice/eventtu/event-types', '/backoffice/users', '/backoffice/groups', '/backoffice/permissions'];
     const selected = routes.find((path) => currentPath === path || currentPath.startsWith(`${path}/`)) ?? '/backoffice';
     const openKeys = currentPath.includes('/konvitte/') ? ['konvitte'] : currentPath.includes('/eventtu/') ? ['eventtu'] : selected !== '/backoffice' ? ['settings', 'access'] : [];
@@ -65,7 +66,7 @@ export default function BackofficeLayout({children}: PropsWithChildren) {
         <div style={{padding: 24}}><Typography.Title level={3} style={{margin: 0}}><Link
             href="/backoffice">Sonild</Link></Typography.Title><Typography.Text
             type="secondary">Administração</Typography.Text></div>
-        <Menu key={selected} mode="inline" selectedKeys={[selected]} defaultOpenKeys={openKeys} items={items}
+        <Menu key={selected} mode="inline" selectedKeys={[selected]} defaultOpenKeys={openKeys} items={visibleItems}
               style={{borderInlineEnd: 0, flex: 1}}/>
         <Flex align="center" gap="small" style={{padding: 16}}>
             <Avatar src={user.avatar}>{initials(user.name)}</Avatar>

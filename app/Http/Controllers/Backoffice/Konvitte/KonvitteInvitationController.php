@@ -21,7 +21,7 @@ class KonvitteInvitationController extends Controller
     {
         $this->ensureAccess();
         return Inertia::render('backoffice/Konvitte/KonvitteInvitations', [
-            'invitations' => KonvitteInvitation::query()->with(['inviteType', 'slug'])->latest('id')->paginate(10)->through(fn($invitation) => [
+            'invitations' => KonvitteInvitation::managedBy(request()->user())->with(['inviteType', 'slug'])->latest('id')->paginate(10)->through(fn($invitation) => [
                 'id' => $invitation->id,
                 'name' => $invitation->groom_name . ' & ' . $invitation->bride_name,
                 'type' => $invitation->inviteType?->name,
@@ -33,7 +33,7 @@ class KonvitteInvitationController extends Controller
 
     private function ensureAccess(): void
     {
-        abort_unless(request()->user()?->hasModulePermission('backoffice', 'ACL'), 403);
+        abort_unless(request()->user()?->canManageKonvitte(), 403);
     }
 
     public function destroy(KonvitteInvitation $invitation): RedirectResponse
@@ -81,6 +81,7 @@ class KonvitteInvitationController extends Controller
         ]);
         DB::transaction(function () use ($request, $data, &$invitation): void {
             $invitation ??= new KonvitteInvitation();
+            if (!$invitation->exists) $invitation->user_id = $request->user()->id;
             $invitation->fill(['konvitte_invite_type_id' => $data['inviteTypeId'], 'bride_name' => $data['nomeNoiva'], 'groom_name' => $data['nomeNoivo'], 'groom_father_name' => $data['nomePaiNoivo'], 'groom_mother_name' => $data['nomeMaeNoivo'], 'bride_father_name' => $data['nomePaiNoiva'], 'bride_mother_name' => $data['nomeMaeNoiva'], 'event_date' => $data['data'], 'venue' => $data['local'], 'google_maps_link' => $data['googleMapsLink'] ?? null, 'bible_text' => $data['textoBiblico'] ?? null, 'bible_reference' => $data['livroBiblico'] ?? null, 'couple_text' => $data['textoCasal'] ?? null, 'celebration_text' => $data['textoCelebre'], 'instructions' => $data['textoOrientacoes'] ?? null]);
             if (array_key_exists('rsvpEnabled', $data)) $invitation->rsvp_enabled = (bool)$data['rsvpEnabled'];
             foreach (['musicTitle' => 'music_title', 'musicArtist' => 'music_artist'] as $input => $column) {

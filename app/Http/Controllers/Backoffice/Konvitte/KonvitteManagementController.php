@@ -56,7 +56,7 @@ class KonvitteManagementController extends Controller
 
     private function ensureAccess(): void
     {
-        abort_unless(request()->user()?->hasModulePermission('backoffice', 'ACL'), 403);
+        abort_unless(request()->user()?->canManageKonvitte(), 403);
     }
 
     public function tables(?KonvitteInvitation $invitation = null): Response
@@ -67,7 +67,7 @@ class KonvitteManagementController extends Controller
     private function index(string $page, ?KonvitteInvitation $invitation): Response
     {
         $this->ensureAccess();
-        $invitation ??= KonvitteInvitation::latest('id')->first();
+        $invitation ??= KonvitteInvitation::managedBy(request()->user())->latest('id')->first();
         $tableFilter = $page === 'KonvitteGuests' ? request()->query('table') : null;
         if ($tableFilter !== null && $tableFilter !== '') {
             abort_unless(is_string($tableFilter) && ($tableFilter === 'none' || ctype_digit($tableFilter)), 400);
@@ -80,7 +80,7 @@ class KonvitteManagementController extends Controller
 
         return Inertia::render('backoffice/Konvitte/' . $page, [
             'invitation' => $invitation ? ['id' => $invitation->id, 'name' => $invitation->groom_name . ' & ' . $invitation->bride_name, 'slug' => $invitation->slug?->slug] : null,
-            'invitations' => KonvitteInvitation::latest('id')->get()->map(fn($item) => ['id' => $item->id, 'name' => $item->groom_name . ' & ' . $item->bride_name]),
+            'invitations' => KonvitteInvitation::managedBy(request()->user())->latest('id')->get()->map(fn($item) => ['id' => $item->id, 'name' => $item->groom_name . ' & ' . $item->bride_name]),
             'tables' => $invitation?->tables()->withCount('guests')->withSum('guests', 'max_guests')->get()->map(fn($table) => ['id' => $table->id, 'name' => $table->name, 'guestCount' => $table->guests_count, 'capacity' => $table->capacity, 'allocatedSeats' => (int)$table->guests_sum_max_guests]) ?? [],
             'filters' => ['table' => $tableFilter],
             'guests' => $invitation && $page === 'KonvitteGuests' ? $invitation->guests()->with(['table', 'slug'])

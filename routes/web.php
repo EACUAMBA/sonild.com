@@ -6,7 +6,6 @@ use App\Http\Controllers\Backoffice\Konvitte\KonvitteInvitationController;
 use App\Http\Controllers\Backoffice\Konvitte\KonvitteManagementController;
 use App\Http\Controllers\Backoffice\Konvitte\KonvitteRsvpController;
 use App\Http\Controllers\Invitations\PublicKonvitteInvitationController;
-use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -15,10 +14,6 @@ Route::post('konvitte/{slug}/{guestSlug}/rsvp', [PublicKonvitteInvitationControl
 
 Route::patch('konvitte/{slug}/{guestSlug}/messages/{message}/visibility', [PublicKonvitteInvitationController::class, 'setMessageVisibility'])->middleware('throttle:30,1')->name('konvitte.messages.visibility');
 Route::post('konvitte/{slug}/{guestSlug}/messages', [PublicKonvitteInvitationController::class, 'storeMessage'])->middleware('throttle:10,1')->name('konvitte.messages.store');
-
-Route::get('email/verify', fn() => redirect(
-    Filament::getPanel('backoffice')->getEmailVerificationPromptUrl(),
-))->middleware('auth')->name('verification.notice');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');

@@ -11,6 +11,7 @@ class UserGroupSeeder extends Seeder
     public function run(): void
     {
         $this->call(PermissionSeeder::class);
+        \App\Services\KonvitteRegistrationGroup::ensure();
 
         $group = UserGroup::firstOrCreate(
             ['code' => UserGroup::codeFromName('Organizadores de eventos')],

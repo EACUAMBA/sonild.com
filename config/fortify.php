@@ -73,7 +73,8 @@ return [
     |
     */
 
-    'home' => '/dashboard',
+    'home' => '/backoffice/konvitte/invitations',
+    'redirects' => ['register' => '/email/verify', 'email-verification' => '/backoffice/konvitte/invitations'],
 
     /*
     |--------------------------------------------------------------------------
@@ -143,6 +144,8 @@ return [
     */
 
     'features' => [
+        Features::registration(),
+        Features::emailVerification(),
         Features::resetPasswords(),
     ],
 

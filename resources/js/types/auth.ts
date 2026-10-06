@@ -10,5 +10,7 @@ export type User = {
 };
 
 export type Auth = {
+    canAdmin: boolean;
+    canKonvitte: boolean;
     user: User;
 };

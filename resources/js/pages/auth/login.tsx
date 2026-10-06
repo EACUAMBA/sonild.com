@@ -1,4 +1,4 @@
-import {Form, Head} from '@inertiajs/react';
+import {Form, Head, Link} from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -91,6 +91,8 @@ export default function Login({ status, canResetPassword }: Props) {
                 )}
             </Form>
 
+            <p className="mt-6 text-center text-sm">Ainda não tem conta? <Link href="/register" className="underline">Criar
+                conta</Link></p>
             {status && (
                 <div role="status" className="sonild-auth-status">
                     {status}
