@@ -40,8 +40,14 @@ pipeline {
         stage('SSR Check') {
             steps {
                 sh '''
-                    docker compose exec -T app \
-                    php artisan inertia:check-ssr
+                    for attempt in 1 2 3 4 5 6; do
+                        if docker compose exec -T app php artisan inertia:check-ssr; then
+                            exit 0
+                        fi
+                        sleep 5
+                    done
+                    docker compose logs --tail=100 app
+                    exit 1
                 '''
             }
         }

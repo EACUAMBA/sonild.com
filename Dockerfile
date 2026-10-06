@@ -31,7 +31,7 @@ RUN composer install \
     --optimize-autoloader
 
 RUN npm ci
-RUN npm run build
+RUN npm run build:ssr
 
 COPY docker/supervisor/supervisord.conf \
     /etc/supervisor/conf.d/supervisord.conf
