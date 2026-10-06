@@ -34,7 +34,7 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
-            case name === 'welcome':
+            case name === 'welcome' || name === 'landing':
                 return null;
             case name.startsWith('backoffice/'):
                 return BackofficeLayout;
