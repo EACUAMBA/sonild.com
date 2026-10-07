@@ -19,6 +19,14 @@ pipeline {
             }
         }
 
+        stage('Prepare Storage') {
+            steps {
+                sh '''
+                    docker compose exec -T app sh /var/www/html/docker/php/entrypoint.sh true
+                '''
+            }
+        }
+
         stage('Migrate') {
             steps {
                 sh '''

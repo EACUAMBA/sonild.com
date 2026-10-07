@@ -42,6 +42,8 @@ RUN chown -R www-data:www-data \
     storage \
     bootstrap/cache
 
+ENTRYPOINT ["sh", "/var/www/html/docker/php/entrypoint.sh"]
+
 EXPOSE 8000
 
 CMD ["/usr/bin/supervisord", "-n"]
