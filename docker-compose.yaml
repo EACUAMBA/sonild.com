@@ -7,6 +7,9 @@ services:
         env_file:
             - /opt/apps/sonild/.env
 
+        volumes:
+            - /opt/apps/sonild/storage:/var/www/html/storage
+
         ports:
             - "127.0.0.1:8100:8000"
 

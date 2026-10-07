@@ -32,6 +32,8 @@ pipeline {
             steps {
                 sh '''
                     docker compose exec -T app \
+                    php artisan storage:link --force
+                    docker compose exec -T app \
                     php artisan optimize
                 '''
             }
