@@ -62,7 +62,7 @@ class PublicKonvitteInvitationController extends Controller
 
         $guest = $guestSlug ? $invitation->guests()->whereHas('slug', fn($query) => $query->where('slug', $guestSlug))->with(['table', 'rsvp'])->firstOrFail() : null;
 
-        return Inertia::render('welcome', [
+        return Inertia::render('invitation', [
             'invitationData' => [
                 'messagesUrl' => $guest ? route('konvitte.messages.store', ['slug' => $slug, 'guestSlug' => $guestSlug], false) : null,
                 'messages' => $guest ? $invitation->messages()->with('guest:id,name')

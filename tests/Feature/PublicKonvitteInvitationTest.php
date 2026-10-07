@@ -22,8 +22,8 @@ function publicInvitationFixture(string $slug): KonvitteInvitation
 
 it('renders saved invitation data publicly without example content', function () {
     publicInvitationFixture('casamento-teste');
-    $this->get('/konvitte/casamento-teste/convidado')->assertOk()->assertInertia(fn(Assert $page) => $page
-        ->component('welcome')->where('invitationData.groom', 'Manecas')
+    $this->get('/konvitte/casamento-teste')->assertOk()->assertInertia(fn(Assert $page) => $page
+        ->component('invitation')->where('invitationData.groom', 'Manecas')
         ->where('invitationData.bride', 'Victoria')->where('invitationData.guest', 'Convidado especial')
         ->where('invitationData.parents.groom', 'Antonio')->where('invitationData.coupleText', 'A nossa historia')
         ->where('invitationData.coverImage', fn($url) => str_ends_with($url, '/storage/konvitte/capa.jpg'))
@@ -35,11 +35,11 @@ it('loads the guest and table only within the matching invitation', function () 
     $mesa = $invite->tables()->create(['name' => 'Esperanca']);
     $guest = $invite->guests()->create(['name' => 'Leia', 'konvitte_table_id' => $mesa->id, 'max_guests' => 3]);
     $guest->slug()->create(['slug' => 'leia']);
-    $this->get('/konvitte/primeiro/convidado/leia')->assertOk()->assertInertia(fn(Assert $page) => $page
+    $this->get('/konvitte/primeiro/leia')->assertOk()->assertInertia(fn(Assert $page) => $page
         ->where('invitationData.guest', 'Leia')->where('invitationData.table', 'Esperanca')
         ->where('invitationData.guestLimit', 'Válido para 3 pessoa(s)'));
     publicInvitationFixture('segundo');
-    $this->get('/konvitte/segundo/convidado/leia')->assertNotFound();
-    $this->get('/konvitte/primeiro/convidado/desconhecido')->assertNotFound();
-    $this->get('/konvitte/desconhecido/convidado')->assertNotFound();
+    $this->get('/konvitte/segundo/leia')->assertNotFound();
+    $this->get('/konvitte/primeiro/desconhecido')->assertNotFound();
+    $this->get('/konvitte/desconhecido')->assertNotFound();
 });
