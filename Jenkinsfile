@@ -23,7 +23,7 @@ pipeline {
             steps {
                 sh '''
                     docker compose exec -T app \
-                    php artisan migrate --force
+                    php artisan migrate --force --seed
                 '''
             }
         }
