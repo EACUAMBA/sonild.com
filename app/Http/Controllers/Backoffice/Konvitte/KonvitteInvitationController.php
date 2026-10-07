@@ -75,6 +75,10 @@ class KonvitteInvitationController extends Controller
             'googleMapsLink' => ['nullable', 'url:http,https', 'max:500'],
             'textoBiblico' => ['nullable', 'string'], 'livroBiblico' => ['nullable', 'string', 'max:120'], 'textoCasal' => ['nullable', 'string'], 'textoCelebre' => ['required', 'string'], 'textoOrientacoes' => ['nullable', 'string'],
             'fotoCapa' => ['nullable', 'image', 'max:5120'], 'fotoInicial' => ['nullable', 'image', 'max:5120'], 'fotoInformacoes' => ['nullable', 'image', 'max:5120'], 'musica' => ['nullable', 'file', 'mimes:mp3,wav,ogg', 'max:20480'],
+            'removeMedia' => ['sometimes', 'array'],
+            'removeMedia.*' => ['string', 'in:fotoCapa,fotoInicial,fotoInformacoes,musica'],
+            'removeGallery' => ['sometimes', 'array'],
+            'removeGallery.*' => ['integer'],
             'gallery' => ['nullable', 'array'], 'gallery.*' => ['image', 'max:5120'],
             'program' => ['nullable', 'array'], 'program.*.hora' => ['nullable', 'string', 'max:5'], 'program.*.nome' => ['nullable', 'string', 'max:255'], 'program.*.localizacao' => ['nullable', 'string', 'max:255'], 'program.*.googleMapsLink' => ['nullable', 'url', 'max:500'], 'program.*.icon' => ['nullable', 'string', 'max:40'],
             'contacts' => ['nullable', 'array'], 'contacts.*.nome' => ['nullable', 'string', 'max:255'], 'contacts.*.telefone' => ['nullable', 'string', 'max:60'], 'contacts.*.email' => ['nullable', 'email', 'max:255'],
@@ -89,6 +93,9 @@ class KonvitteInvitationController extends Controller
             }
             $invitation->save();
             foreach (['fotoCapa' => 'cover', 'fotoInicial' => 'hero', 'fotoInformacoes' => 'information', 'musica' => 'music'] as $input => $role) {
+                if (in_array($input, $data['removeMedia'] ?? [], true)) {
+                    $invitation->files()->wherePivot('role', $role)->detach();
+                }
                 if ($request->hasFile($input)) {
                     $file = File::storeUpload($request->file($input));
                     $invitation->files()->wherePivot('role', $role)->detach();
@@ -106,6 +113,7 @@ class KonvitteInvitationController extends Controller
             foreach (collect($data['program'] ?? [])->filter(fn($item) => filled($item['nome'] ?? null))->values() as $order => $item) $invitation->programItems()->create(['time' => $item['hora'] ?? '', 'name' => $item['nome'], 'location' => $item['localizacao'] ?? null, 'google_maps_link' => $item['googleMapsLink'] ?? null, 'icon' => $item['icon'] ?? 'calendar', 'sort_order' => $order]);
             $invitation->contacts()->delete();
             foreach (collect($data['contacts'] ?? [])->filter(fn($item) => filled($item['nome'] ?? null))->values() as $order => $contact) $invitation->contacts()->create(['name' => $contact['nome'], 'phone' => $contact['telefone'] ?? null, 'email' => $contact['email'] ?? null, 'sort_order' => $order]);
+            $invitation->gallery()->detach($data['removeGallery'] ?? []);
             foreach ($request->file('gallery', []) as $image) {
                 $file = File::storeUpload($image);
                 $invitation->files()->attach($file->id, ['role' => 'gallery']);

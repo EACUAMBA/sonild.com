@@ -13,7 +13,6 @@ import {
     Row,
     Select,
     Switch,
-    Tag,
     TimePicker,
     Typography,
     Upload
@@ -62,7 +61,10 @@ type Props = {
     convite: ExistingInvite;
 
 };
+type MediaKey = 'fotoCapa' | 'fotoInicial' | 'fotoInformacoes' | 'musica';
 type FormData = {
+    removeMedia: MediaKey[];
+    removeGallery: number[];
     inviteTypeId: string;
     rsvpEnabled: boolean;
     nomeNoiva: string;
@@ -97,6 +99,8 @@ const icons = [{value: 'church', label: 'Igreja'}, {value: 'camera', label: 'Fot
 const emptyProgram = (): ProgramItem => ({hora: '', nome: '', localizacao: '', googleMapsLink: '', icon: 'calendar'});
 const emptyContact = (): Contact => ({nome: '', telefone: '', email: ''});
 const initialData = (convite: ExistingInvite): FormData => ({
+    removeMedia: [],
+    removeGallery: [],
     rsvpEnabled: convite?.rsvpEnabled ?? false,
     inviteTypeId: convite ? String(convite.inviteTypeId) : '',
     nomeNoiva: convite?.nomeNoiva ?? '',
@@ -132,7 +136,19 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
         validateStatus: errors[key] ? 'error' as const : undefined,
         help: errors[key]
     });
-    const submit = () => form.post(convite ? `/backoffice/konvitte/invitations/${convite.id}` : '/backoffice/konvitte/invitations', {forceFormData: true});
+    const submit = () => form.post(convite ? `/backoffice/konvitte/invitations/${convite.id}` : '/backoffice/konvitte/invitations', {
+        forceFormData: true,
+        onSuccess: () => form.setData((data) => ({
+            ...data,
+            fotoCapa: null,
+            fotoInicial: null,
+            fotoInformacoes: null,
+            musica: null,
+            gallery: [],
+            removeMedia: [],
+            removeGallery: []
+        })),
+    });
     const updateProgram = (index: number, key: keyof ProgramItem, value: string) => form.setData('program', form.data.program.map((item, i) => i === index ? {
         ...item,
         [key]: value
@@ -151,12 +167,22 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
     </Form.Item>;
     const fileField = (key: 'fotoCapa' | 'fotoInicial' | 'fotoInformacoes' | 'musica', label: string, accept: string) =>
         <Form.Item label={label} {...errorProps(key)}
-                   extra={convite?.[key] ? 'Já existe um ficheiro guardado. Selecione outro para o substituir.' : undefined}>
+                   extra={convite?.[key] ? (form.data.removeMedia.includes(key) ? 'Será removido ao guardar o convite.' : 'Já existe um ficheiro guardado. Selecione outro para o substituir.') : undefined}>
             <Upload accept={accept} maxCount={1} beforeUpload={() => false}
                     fileList={form.data[key] ? [{uid: key, name: form.data[key].name, status: 'done'}] : []}
-                    onChange={({fileList}) => form.setData(key, fileList[0]?.originFileObj ?? null)}>
+                    onChange={({fileList}) => form.setData((data) => ({
+                        ...data,
+                        [key]: fileList[0]?.originFileObj ?? null,
+                        removeMedia: fileList.length ? data.removeMedia.filter((item) => item !== key) : data.removeMedia
+                    }))}>
                 <Button icon={<UploadOutlined/>}>Selecionar ficheiro</Button>
             </Upload>
+            {convite?.[key] && <Button type="link" danger={!form.data.removeMedia.includes(key)}
+                                       icon={<DeleteOutlined/>} onClick={() => form.setData((data) => ({
+                ...data,
+                [key]: null,
+                removeMedia: data.removeMedia.includes(key) ? data.removeMedia.filter((item) => item !== key) : [...data.removeMedia, key],
+            }))}>{form.data.removeMedia.includes(key) ? 'Anular remoção' : 'Remover ficheiro guardado'}</Button>}
         </Form.Item>;
     const nestedField = (label: string, errorKey: string, control: ReactNode) => <Form.Item
         label={label} {...errorProps(errorKey)}>{control}</Form.Item>;
@@ -284,8 +310,22 @@ export default function KonvitteInvitation({inviteTypes, convite}: Props) {
                         </Form.Item>
                         {Object.entries(errors).filter(([key]) => key.startsWith('gallery.')).map(([key, error]) =>
                             <Typography.Paragraph type="danger" key={key}>{error}</Typography.Paragraph>)}
-                        <Flex wrap gap="small">{convite?.gallery.map((image) => <Tag
-                            key={image.id}>{image.name}</Tag>)}</Flex>
+                        <Typography.Paragraph type="secondary">As remoções são aplicadas ao guardar o
+                            convite.</Typography.Paragraph>
+                        <Flex wrap gap="small">{convite?.gallery.map((image) => <Card size="small" key={image.id}>
+                            <img src={image.url} alt={image.name} style={{
+                                width: 120,
+                                height: 90,
+                                objectFit: 'cover',
+                                opacity: form.data.removeGallery.includes(image.id) ? 0.35 : 1
+                            }}/>
+                            <div>{image.name}</div>
+                            <Button type="link" danger={!form.data.removeGallery.includes(image.id)}
+                                    icon={<DeleteOutlined/>}
+                                    onClick={() => form.setData('removeGallery', form.data.removeGallery.includes(image.id) ? form.data.removeGallery.filter((id) => id !== image.id) : [...form.data.removeGallery, image.id])}>
+                                {form.data.removeGallery.includes(image.id) ? 'Anular remoção' : 'Remover fotografia'}
+                            </Button>
+                        </Card>)}</Flex>
                     </Card>
                     <Card title="Contactos">
                         <Flex vertical gap="middle">
